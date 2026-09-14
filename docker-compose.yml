@@ -1,0 +1,9 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: res_user
+      POSTGRES_PASSWORD: res_password
+      POSTGRES_DB: reservation_db
+    ports:
+      - "5432:5432"
