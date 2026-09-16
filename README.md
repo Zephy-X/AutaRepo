@@ -27,6 +27,16 @@ Follow these steps for a clean build and run:
    Use Maven wrapper to start the app:
    ```bash
    ./mvnw spring-boot:run
+3. ## How to Stop (Graceful Shutdown)
+Aby si aplikáciu a databázu bezpečne zastavil bez straty dát:
+
+1. **Zastavenie aplikácie (Spring Boot)**  
+   V termináli (PowerShell), kde beží príkaz Maven, stlač `Ctrl + C`. Spring Boot bezpečne ukončí všetky procesy a odpojí sa od databázy.
+
+2. **Zastavenie databázy (Docker)**  
+   Otvor nový terminál v priečinku s projektom a použi príkaz:
+   ```bash
+   docker compose down
 
 ## POST /reservations
 → validate input data
