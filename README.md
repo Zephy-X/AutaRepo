@@ -47,17 +47,31 @@ Aby si aplikáciu a databázu bezpečne zastavil bez straty dát:
 ## Definition of Done (Stav pred C02)
 
 [x] Tým 3–4 členové
+
 [x] Spoločný repozitár (Zephy-X/AutaRepo)
+
 [x] Jasný reservation domain (Rezervácia vozidiel)
+
 [x] Resource (Vehicle) + Reservation + User (userId)
+
 [x] Zmysluplné stavy rezervácie (DRAFT, CONFIRMED, CANCELLED)
+
 [x] Operácie (create, confirm/approve, cancel, availability cez REST API)
+
 [x] Common overlap rule (definované v Project Frame)
+
 [x] 1 domain-specific business rule (definované v Project Frame)
+
 [x] 1 external/system boundary (Notification Service definovaná v Project Frame)
+
 [x] Kompletný Project Frame v docs/intent-and-change.md
+
 [x] 1 Q/C/R/L future pressure (zvolená Q - Quality/Scale)
+
 [x] 1 reviewed and integrated change (formálny code review v tíme)
+
 [x] 1 vykonaný engineering spike (Spike A – pripojenie PostgreSQL a uloženie entity)
+
 [x] Spike evidence + decision v docs/evidence-and-evolution.md
+
 [x] Definovaný CP1 walking skeleton v README.md
