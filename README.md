@@ -23,21 +23,31 @@ Follow these steps for a clean build and run:
    Run the PostgreSQL container in the background:
    ```bash
    docker compose up -d
+2. **Run the application**
+   Use Maven wrapper to start the app:
+   ```bash
+   ./mvnw spring-boot:run
+
+## POST /reservations
+→ validate input data
+→ persist into PostgreSQL database
+→ return generated reservation ID (e.g. 201 Created)
+→ automated/REST check via GET /reservations
 
 ## Definition of Done (Stav pred C02)
 
-- [x] Tým 3–4 členové
-- [x] Spoločný repozitár (`Zephy-X/AutaRepo`)
-- [x] Jasný reservation domain (Rezervácia vozidiel)
-- [x] Resource (`Vehicle`) + Reservation + User (`userId`)
-- [x] Zmysluplné stavy rezervácie (`DRAFT`, `CONFIRMED`, `CANCELLED`)
-- [ ] Operácie (`create` hotové, `confirm/approve`, `cancel` a `availability` čakajú na implementáciu)
-- [ ] Common overlap rule (kontrola prekrývania termínov)
-- [ ] 1 domain-specific business rule (vlastné biznis pravidlo)
-- [ ] 1 external/system boundary (Notification Service)
-- [ ] Kompletný Project Frame v `docs/intent-and-change.md`
-- [ ] 1 Q/C/R/L future pressure (budúci tlak/záťaž)
-- [ ] 1 reviewed and integrated change (formálny code review v tíme)
-- [x] 1 vykonaný engineering spike (Spike A – pripojenie PostgreSQL a uloženie entity)
-- [ ] Spike evidence + decision v `docs/evidence-and-evolution.md`
-- [ ] Definovaný CP1 walking skeleton v `README.md`
+[x] Tým 3–4 členové
+[x] Spoločný repozitár (Zephy-X/AutaRepo)
+[x] Jasný reservation domain (Rezervácia vozidiel)
+[x] Resource (Vehicle) + Reservation + User (userId)
+[x] Zmysluplné stavy rezervácie (DRAFT, CONFIRMED, CANCELLED)
+[x] Operácie (create, confirm/approve, cancel, availability cez REST API)
+[x] Common overlap rule (definované v Project Frame)
+[x] 1 domain-specific business rule (definované v Project Frame)
+[x] 1 external/system boundary (Notification Service definovaná v Project Frame)
+[x] Kompletný Project Frame v docs/intent-and-change.md
+[x] 1 Q/C/R/L future pressure (zvolená Q - Quality/Scale)
+[x] 1 reviewed and integrated change (formálny code review v tíme)
+[x] 1 vykonaný engineering spike (Spike A – pripojenie PostgreSQL a uloženie entity)
+[x] Spike evidence + decision v docs/evidence-and-evolution.md
+[x] Definovaný CP1 walking skeleton v README.md

@@ -19,4 +19,24 @@ public class ReservationController {
         Reservation saved = repository.save(reservation);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved.getId());
     }
+    @GetMapping
+    public java.util.List<Reservation> getAllReservations() {
+        return repository.findAll();
+    }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReservation(@PathVariable Long id) {
+        if (repository.existsById(id)) {
+            repository.deleteById(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
+    }
+    @PutMapping("/{id}/confirm")
+    public ResponseEntity<Reservation> confirmReservation(@PathVariable Long id) {
+        return repository.findById(id).map(reservation -> {
+            reservation.setState(ReservationState.CONFIRMED);
+            Reservation updated = repository.save(reservation);
+            return ResponseEntity.ok(updated);
+        }).orElse(ResponseEntity.notFound().build());
+    }
 }
