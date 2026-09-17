@@ -29,6 +29,8 @@
 - **Architectural Style:** Monolithic Server-Side Rendered (SSR) Web App (No detached REST API)
 - **Design Pattern:** Package-by-Feature with strict Layered Separation (`Controller` → `Service` → `Repository` → `Database`)
 
+---
+
 ## CP1 Walking Skeleton
 
 - **POST `/reservations`**
@@ -39,65 +41,75 @@
 
 ---
 
-## How to Build and Run (Reproducible Build)
 
-### Prerequisites
+# Quick Start
 
-- **Java 21** (JDK installed and available on `$PATH`)
-- **Docker** & **Docker Compose** installed and running
+### Prerequisites 
+
+- **Java 21**
+- **Docker** 
+
+> **Tip:** Open the terminal in IntelliJ with `Alt + F12`.
 
 ---
 
-### Step-by-Step Instructions
+## 1. Start Database & Tools
 
-1. **Start the database & management tools**  
-   Start PostgreSQL and pgAdmin containers in the background:
+```bash
+docker compose up -d
+```
 
-   ```bash
-   docker compose up -d
-   ```
+* **App DB:** `localhost:5432` (`autorepodb`)
+* **pgAdmin:** [http://localhost:5050](http://localhost:5050)
+  * **pgAdmin Login:**
+    * **Email:** `admin@autorepo.com`
+    * **Password:** `admin`
+  * **PostgreSQL Connection (inside pgAdmin):**
+    * **Username:** `postgres`
+    * **Password:** `mysecretpassword`
 
-   - **PostgreSQL:** `localhost:5432` (database: `autorepodb`, user: `postgres`, password: `mysecretpassword`)
-   - **pgAdmin Console:** `http://localhost:5050`
+## 2. Run the Reservation Spike Test
 
-2. **Run tests & verification suite**  
-   Execute unit and integration tests (including the persistence spike test):
+```bash
+./mvnw test -Dtest=ReservationPersistenceSpikeTest
+```
 
-   ```bash
-   # Linux / macOS
-   ./mvnw clean test
+---
 
-   # Windows
-   mvnw.cmd clean test
-   ```
+## 3. Run the Application
 
-3. **Build the application**  
-   Compile and package the runnable JAR file:
+```bash
+./mvnw spring-boot:run
+```
 
-   ```bash
-   # Linux / macOS
-   ./mvnw clean package
+> **Note:** Run via `./mvnw spring-boot:run` at least on the first startup so the database initializes with default seed data.
 
-   # Windows
-   mvnw.cmd clean package
-   ```
+Access the application at: [http://localhost:8080/vehicles](http://localhost:8080/vehicles)
 
-4. **Run the application**  
-   Start the Spring Boot web application:
+---
 
-   ```bash
-   # Option A: Run directly via Maven
-   ./mvnw spring-boot:run
+## 4. Stop Environment & Reset Data
 
-   # Option B: Run the packaged JAR
-   java -jar target/autorepo-0.0.1-SNAPSHOT.jar
-   ```
+```bash
+docker compose down -v
+```
 
-   - The web application is accessible at: `http://localhost:8080/vehicles`
+---
 
-5. **Tear down the environment**  
-   Stop and remove containers when finished:
-   ```bash
-   docker compose down
-   ```
-   _(Optional: append `-v` to reset all database volume data: `docker compose down -v`)_
+# Definition of Done (Stav pred C02)
+
+- [x] Tým 3–4 členové
+- [x] Spoločný repozitár (`Zephy-X/AutaRepo`)
+- [x] Jasný reservation domain (Rezervácia vozidiel)
+- [x] Resource (`Vehicle`) + Reservation + User (`userId`)
+- [x] Zmysluplné stavy rezervácie (`DRAFT`, `CONFIRMED`, `CANCELLED`)
+- [x] Operácie (`create`, `confirm`/`approve`, `cancel`, availability cez REST API)
+- [x] Common overlap rule (definované v Project Frame)
+- [x] 1 domain-specific business rule (definované v Project Frame)
+- [x] 1 external/system boundary (Notification Service definovaná v Project Frame)
+- [x] Kompletný Project Frame v `docs/intent-and-change.md`
+- [x] 1 Q/C/R/L future pressure (zvolená Q - Quality/Scale)
+- [ ] 1 reviewed and integrated change (formálny code review v tíme)
+- [x] 1 vykonaný engineering spike (Spike A – pripojenie PostgreSQL a uloženie entity)
+- [x] Spike evidence + decision v `docs/evidence-and-evolution.md`
+- [x] Definovaný CP1 walking skeleton v `README.md`
