@@ -5,10 +5,10 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record ReservationForm(
-    @NotNull(message = "Vehicle is required")
+    @NotNull(message = "Please select an option")
     Long vehicleId,
 
-    @NotNull(message = "User is required")
+    @NotNull(message = "Please select an option")
     Long userId,
 
     @NotNull(message = "Start time is required")

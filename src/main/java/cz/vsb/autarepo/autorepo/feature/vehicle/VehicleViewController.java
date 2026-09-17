@@ -4,6 +4,7 @@ import cz.vsb.autarepo.autorepo.feature.vehicle.dto.VehicleForm;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -34,8 +35,15 @@ public class VehicleViewController {
     }
 
     @PostMapping
-    public String createVehicle(@Valid @ModelAttribute VehicleForm vehicleForm, 
+    public String createVehicle(@Valid @ModelAttribute("vehicleForm") VehicleForm vehicleForm,
+                               BindingResult bindingResult,
+                               Model model,
                                RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("pageTitle", "Add Vehicle");
+            return "feature/vehicle/form";
+        }
+
         vehicleService.createVehicle(vehicleForm);
         redirectAttributes.addFlashAttribute("successMessage", "Vehicle added successfully");
         return "redirect:/vehicles";
@@ -59,8 +67,16 @@ public class VehicleViewController {
 
     @PostMapping("/{id}")
     public String updateVehicle(@PathVariable Long id,
-                               @Valid @ModelAttribute VehicleForm vehicleForm,
+                               @Valid @ModelAttribute("vehicleForm") VehicleForm vehicleForm,
+                               BindingResult bindingResult,
+                               Model model,
                                RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("vehicleId", id);
+            model.addAttribute("pageTitle", "Edit Vehicle");
+            return "feature/vehicle/form";
+        }
+
         vehicleService.updateVehicle(id, vehicleForm);
         redirectAttributes.addFlashAttribute("successMessage", "Vehicle updated successfully");
         return "redirect:/vehicles";

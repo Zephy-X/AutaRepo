@@ -8,6 +8,7 @@ import cz.vsb.autarepo.autorepo.feature.vehicle.VehicleService;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -50,14 +51,24 @@ public class ReservationViewController {
     }
 
     @PostMapping
-    public String createReservation(@Valid @ModelAttribute ReservationForm reservationForm,
+    public String createReservation(@Valid @ModelAttribute("reservationForm") ReservationForm reservationForm,
+                                   BindingResult bindingResult,
+                                   Model model,
                                    RedirectAttributes redirectAttributes) {
+        validateReservationDates(reservationForm, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            populateReservationFormData(model);
+            return "feature/reservation/form";
+        }
+
         try {
             reservationService.createReservation(reservationForm);
             redirectAttributes.addFlashAttribute("successMessage", "Reservation created successfully");
         } catch (IllegalArgumentException e) {
-            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
-            return "redirect:/reservations/create";
+            bindingResult.rejectValue("startTime", "reservation.startTime.invalid", e.getMessage());
+            populateReservationFormData(model);
+            return "feature/reservation/form";
         }
         return "redirect:/reservations";
     }
@@ -82,5 +93,34 @@ public class ReservationViewController {
             redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
         }
         return "redirect:/reservations";
+    }
+
+    private void validateReservationDates(ReservationForm reservationForm, BindingResult bindingResult) {
+        if (reservationForm.startTime() == null || reservationForm.endTime() == null) {
+            return;
+        }
+
+        LocalDateTime minimumStartTime = LocalDateTime.now().plusHours(2);
+        if (reservationForm.startTime().isBefore(minimumStartTime)) {
+            bindingResult.rejectValue(
+                    "startTime",
+                    "reservation.startTime.future",
+                    "Reservation must start at least 2 hours in the future"
+            );
+        }
+
+        if (!reservationForm.endTime().isAfter(reservationForm.startTime())) {
+            bindingResult.rejectValue(
+                    "endTime",
+                    "reservation.endTime.afterStart",
+                    "End time must be after start time"
+            );
+        }
+    }
+
+    private void populateReservationFormData(Model model) {
+        model.addAttribute("vehicles", vehicleService.findAll());
+        model.addAttribute("users", userService.findAll());
+        model.addAttribute("pageTitle", "New Reservation");
     }
 }
