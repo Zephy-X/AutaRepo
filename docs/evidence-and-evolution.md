@@ -1,17 +1,19 @@
 # C01 Engineering Spike
 
 ## Question / unknown
-Bude vedieť náš zvolený stack (Java 21 + Spring Boot 4 + Spring Data JPA + Hibernate) úspešne a bezchybne komunikovať s lokálnym kontajnerom PostgreSQL 16 bežiacim cez Docker, a správne persistovať entity rezervácie?
+
+Can our Spring Boot 3 + Java 21 application connect to PostgreSQL 16 running in Docker, generate the required schema via Hibernate, and successfully persist and reload a complete `Reservation` entity graph (`Reservation` -> `Vehicle` + `User`)?
 
 ## What we did
-1. Pripravili sme kontajner s PostgreSQL pomocou `docker-compose.yml`.
-2. Vytvorili sme čistú štruktúru projektu s požadovanými závislosťami (Spring Web, Data JPA, PostgreSQL Driver, Lombok).
-3. Implementovali sme entity `Vehicle`, `Reservation`, `ReservationState` a repozitár `ReservationRepository`.
-4. Vytvorili sme `ReservationController` s reálnymi endpointmi (`POST`, `GET`, `PUT`, `DELETE`).
-5. Spustili sme aplikáciu a otestovali zápis a čítanie dát do reálnej databázy pomocou PowerShell príkazov (`Invoke-RestMethod`).
+
+1. Configured `docker-compose.yml` with PostgreSQL 16 and pgAdmin 4.
+2. Created entity models (`Vehicle`, `User`, `Reservation`) using Jakarta Persistence and Spring Data JPA repositories.
+3. Implemented an automated integration test `ReservationPersistenceSpikeTest.java` (Spike A) that builds a test reservation, saves it to PostgreSQL, and re-reads it using `findById`.
 
 ## Observed result
-Aplikácia sa úspešne pripojila k databáze cez HikariCP pool. HTTP požiadavky (`POST /reservations`, `GET`, `PUT`, `DELETE`) prebehli bez chýb, dáta sa správne uložili do tabuliek v PostgreSQL a aplikácia vracala očakávané odpovede vrátane generovaných ID.
+
+The test executed successfully. The PostgreSQL container accepted connections on `localhost:5432`, Hibernate automatically applied DDL updates, and the saved reservation was retrieved with matching IDs, timestamps, and foreign key relations.
 
 ## Decision / what changes because of the result
-Engineering Spike A (Persistence) bol úspešne ukončený s pozitívnym výsledkom. Potvrdili sme, že zvolený technologický stack je plne funkčný a pripravený pre ďalší vývoj. Architektúra pre perzistenciu ostáva zachovaná.
+
+We confirm that Dockerized PostgreSQL with Spring Data JPA satisfies our persistence requirements. We will proceed with this baseline stack for the CP1 walking skeleton without introducing extra database migration tooling until needed.
