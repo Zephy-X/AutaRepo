@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dim"
+      th:fragment="layout(title, content)"
+      xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title th:replace="${title}">AutoRepo</title>
+
+  <!-- External Styles -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet" type="text/css" />
+</head>
+<body class="min-h-screen bg-base-100 flex flex-col text-base-content antialiased">
+<header th:replace="~{components/navbar :: navbar}"></header>
+
+<aside class="container mx-auto max-w-7xl px-4 mt-4">
+  <div th:replace="~{components/alert :: alerts}"></div>
+</aside>
+
+<!-- Slot where page content goes -->
+<main class="container mx-auto max-w-7xl px-4 py-6 flex-1" th:insert="${content}">
+</main>
+
+<footer class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300 text-xs">
+  <p>&copy; AutoRepo Fleet Management Portal</p>
+</footer>
+</body>
+</html>

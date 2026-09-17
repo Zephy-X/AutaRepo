@@ -1,0 +1,33 @@
+<!-- Form Input Wrapper Fragment -->
+<div th:fragment="input(label, field, placeholder, type)" xmlns:th="http://www.thymeleaf.org" class="form-control w-full mb-4">
+  <label class="label">
+    <span class="label-text font-medium" th:text="${label}">Label</span>
+  </label>
+  <input
+    class="input input-bordered w-full focus:input-primary"
+    th:field="*{__${field}__}"
+    th:type="${type} ?: 'text'"
+    th:placeholder="${placeholder}"
+    th:classappend="${#fields.hasErrors(field)} ? 'input-error' : ''"
+  />
+  <label class="label" th:if="${#fields.hasErrors(field)}">
+    <span class="label-text-alt text-error text-xs" th:errors="*{__${field}__}">Validation error</span>
+  </label>
+</div>
+
+<!-- Form Select Wrapper Fragment -->
+<div th:fragment="select(label, field)" xmlns:th="http://www.thymeleaf.org" class="form-control w-full mb-4">
+  <label class="label">
+    <span class="label-text font-medium" th:text="${label}">Label</span>
+  </label>
+  <select
+    class="select select-bordered w-full focus:select-primary"
+    th:field="*{__${field}__}"
+    th:classappend="${#fields.hasErrors(field)} ? 'select-error' : ''"
+  >
+    <option value="">-- Select an option --</option>
+  </select>
+  <label class="label" th:if="${#fields.hasErrors(field)}">
+    <span class="label-text-alt text-error text-xs" th:errors="*{__${field}__}">Validation error</span>
+  </label>
+</div>

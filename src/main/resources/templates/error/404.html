@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dim" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Resource Not Found - AutoRepo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css"
+      rel="stylesheet"
+      type="text/css"
+    />
+  </head>
+  <body class="min-h-screen bg-base-100 flex flex-col text-base-content antialiased">
+    <div class="flex flex-col items-center justify-center flex-1 p-4">
+      <div class="card bg-base-200 border border-base-300 shadow-lg max-w-md">
+        <div class="card-body">
+          <h2 class="card-title text-3xl font-bold text-center mb-2">404</h2>
+          <p class="text-center text-lg mb-4">Resource Not Found</p>
+          <p class="text-center text-sm text-base-content/70 mb-6">
+            The page you are looking for does not exist or has been removed.
+          </p>
+          <div class="card-actions justify-center">
+            <a href="/vehicles" class="btn btn-primary">Return to Fleet</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

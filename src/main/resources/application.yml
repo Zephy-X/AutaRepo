@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: AutoRepo
+  
+  datasource:
+    url: jdbc:postgresql://localhost:5432/autorepodb
+    username: postgres
+    password: mysecretpassword
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+  
+  thymeleaf:
+    cache: false
+
+server:
+  port: 8080
