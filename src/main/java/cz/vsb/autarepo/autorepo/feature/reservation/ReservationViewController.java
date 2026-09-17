@@ -40,7 +40,7 @@ public class ReservationViewController {
 
     @GetMapping("/create")
     public String showCreateForm(Model model) {
-        List<Vehicle> vehicles = vehicleService.findAll();
+        List<Vehicle> vehicles = vehicleService.findAvailable();
         List<User> users = userService.findAll();
 
         model.addAttribute("reservationForm", new ReservationForm(null, null, null, null));
@@ -119,7 +119,7 @@ public class ReservationViewController {
     }
 
     private void populateReservationFormData(Model model) {
-        model.addAttribute("vehicles", vehicleService.findAll());
+        model.addAttribute("vehicles", vehicleService.findAvailable());
         model.addAttribute("users", userService.findAll());
         model.addAttribute("pageTitle", "New Reservation");
     }

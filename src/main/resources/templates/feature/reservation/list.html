@@ -45,16 +45,19 @@
           <span th:text="${#temporals.format(reservation.endTime, 'dd.MM.yyyy HH:mm')}">02.01.2024 10:00</span>
         </td>
         <td>
-          <span th:if="${reservation.state == 'DRAFT'}" class="badge badge-warning badge-sm">Draft</span>
-          <span th:if="${reservation.state == 'CONFIRMED'}" class="badge badge-success badge-sm">Confirmed</span>
-          <span th:if="${reservation.state == 'CANCELLED'}" class="badge badge-error badge-sm">Cancelled</span>
+          <span th:if="${reservation.state != null and reservation.state.name() == 'DRAFT'}" class="badge badge-warning badge-sm">Draft</span>
+          <span th:if="${reservation.state != null and reservation.state.name() == 'CONFIRMED'}" class="badge badge-success badge-sm">Confirmed</span>
+          <span th:if="${reservation.state != null and reservation.state.name() == 'CANCELLED'}" class="badge badge-error badge-sm">Cancelled</span>
+          <span th:if="${reservation.state != null and reservation.state.name() != 'DRAFT' and reservation.state.name() != 'CONFIRMED' and reservation.state.name() != 'CANCELLED'}"
+                class="badge badge-ghost badge-sm"
+                th:text="${reservation.state}">Unknown</span>
         </td>
         <td>
           <div class="join">
-            <form th:if="${reservation.state == 'DRAFT'}" th:action="@{/reservations/{id}/confirm(id=${reservation.id})}" method="post" class="inline">
+            <form th:if="${reservation.state != null and reservation.state.name() == 'DRAFT'}" th:action="@{/reservations/{id}/confirm(id=${reservation.id})}" method="post" class="inline">
               <button type="submit" class="btn btn-xs btn-ghost join-item">Confirm</button>
             </form>
-            <form th:if="${reservation.state != 'CANCELLED'}" th:action="@{/reservations/{id}/cancel(id=${reservation.id})}" method="post" class="inline">
+            <form th:if="${reservation.state == null or reservation.state.name() != 'CANCELLED'}" th:action="@{/reservations/{id}/cancel(id=${reservation.id})}" method="post" class="inline">
               <button type="submit" class="btn btn-xs btn-error btn-ghost join-item" onclick="return confirm('Cancel reservation?')">Cancel</button>
             </form>
           </div>

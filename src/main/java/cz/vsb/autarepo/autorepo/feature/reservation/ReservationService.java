@@ -48,6 +48,9 @@ public class ReservationService {
         validateReservationWindow(form.startTime(), form.endTime());
 
         Vehicle vehicle = vehicleService.findById(form.vehicleId());
+        if (!vehicle.isAvailable()) {
+            throw new IllegalArgumentException("Selected vehicle is not available");
+        }
         User user = userService.findById(form.userId());
 
         Reservation reservation = Reservation.builder()

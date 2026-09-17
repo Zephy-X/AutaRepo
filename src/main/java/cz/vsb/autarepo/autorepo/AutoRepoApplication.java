@@ -6,7 +6,6 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication
-//@ComponentScan(basePackages = "cz.vsb.autarepo.autorepo")
 @EnableJpaRepositories(basePackages = "cz.vsb.autarepo.autorepo.feature")
 public class AutoRepoApplication {
 

@@ -28,6 +28,8 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <!-- Default profile for spring-boot:run in development -->
+        <spring-boot.run.profiles>local</spring-boot.run.profiles>
     </properties>
     <dependencies>
         <dependency>
