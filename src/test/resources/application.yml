@@ -1,4 +1,4 @@
-  spring:
+spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/autorepodb
     driver-class-name: org.postgresql.Driver
