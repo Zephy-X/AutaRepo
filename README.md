@@ -110,6 +110,6 @@ docker compose down -v
 - [x] Kompletný Project Frame v `docs/intent-and-change.md`
 - [x] 1 Q/C/R/L future pressure (zvolená Q - Quality/Scale)
 - [ ] 1 reviewed and integrated change (formálny code review v tíme)
-- [x] 1 vykonaný engineering spike (Spike A – pripojenie PostgreSQL a uloženie entity)
-- [x] Spike evidence + decision v `docs/evidence-and-evolution.md`
+- [ ] 1 vykonaný engineering spike (Spike A – pripojenie PostgreSQL a uloženie entity)
+- [ ] Spike evidence + decision v `docs/evidence-and-evolution.md`
 - [x] Definovaný CP1 walking skeleton v `README.md`

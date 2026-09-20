@@ -8,6 +8,9 @@ import java.time.LocalDateTime;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     boolean existsByVehicleIdAndStateAndStartTimeLessThanAndEndTimeGreaterThan(
-        Long vehicleId, ReservationState state, LocalDateTime requestedEnd, LocalDateTime requestedStart
+        Long vehicleId,
+        ReservationState state,
+        LocalDateTime requestedEnd,
+        LocalDateTime requestedStart
     );
 }
