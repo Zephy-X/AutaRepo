@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::section})}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reservations</title>
+</head>
+<body>
+<section class="flex flex-col gap-6">
+  <div class="flex justify-between items-center">
+    <div>
+      <h1 class="text-2xl font-bold tracking-tight">Reservations</h1>
+      <p class="text-sm text-base-content/70 mt-1" th:text="'Total reservations: ' + ${reservations.size()}">Total reservations: 0</p>
+    </div>
+    <a href="/reservations/create" class="btn btn-primary btn-sm">+ New Reservation</a>
+  </div>
+
+  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-200/50">
+    <table class="table table-zebra w-full">
+      <thead class="bg-base-200 text-xs text-base-content/70">
+      <tr>
+        <th>ID</th>
+        <th>Vehicle</th>
+        <th>Driver</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="reservation : ${reservations}">
+        <td class="font-mono text-sm" th:text="${reservation.id}">#123</td>
+        <td>
+          <span th:text="${reservation.vehicle.brand + ' ' + reservation.vehicle.model}">Toyota Corolla</span>
+          <br />
+          <span class="text-xs text-base-content/60 font-mono" th:text="${reservation.vehicle.licensePlate}">ABC-1234</span>
+        </td>
+        <td th:text="${reservation.user.fullName}">John Doe</td>
+        <td class="font-mono tabular-nums text-xs">
+          <span th:text="${#temporals.format(reservation.startTime, 'dd.MM.yyyy HH:mm')}">01.01.2024 14:00</span>
+        </td>
+        <td class="font-mono tabular-nums text-xs">
+          <span th:text="${#temporals.format(reservation.endTime, 'dd.MM.yyyy HH:mm')}">02.01.2024 10:00</span>
+        </td>
+        <td>
+          <span th:if="${reservation.state != null and reservation.state.name() == 'DRAFT'}" class="badge badge-warning badge-sm">Draft</span>
+          <span th:if="${reservation.state != null and reservation.state.name() == 'CONFIRMED'}" class="badge badge-success badge-sm">Confirmed</span>
+          <span th:if="${reservation.state != null and reservation.state.name() == 'CANCELLED'}" class="badge badge-error badge-sm">Cancelled</span>
+          <span th:if="${reservation.state != null and reservation.state.name() != 'DRAFT' and reservation.state.name() != 'CONFIRMED' and reservation.state.name() != 'CANCELLED'}"
+                class="badge badge-ghost badge-sm"
+                th:text="${reservation.state}">Unknown</span>
+        </td>
+        <td>
+          <div class="join">
+            <form th:if="${reservation.state != null and reservation.state.name() == 'DRAFT'}" th:action="@{/reservations/{id}/confirm(id=${reservation.id})}" method="post" class="inline">
+              <button type="submit" class="btn btn-xs btn-ghost join-item">Confirm</button>
+            </form>
+            <form th:if="${reservation.state == null or reservation.state.name() != 'CANCELLED'}" th:action="@{/reservations/{id}/cancel(id=${reservation.id})}" method="post" class="inline">
+              <button type="submit" class="btn btn-xs btn-error btn-ghost join-item" onclick="return confirm('Cancel reservation?')">Cancel</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div th:if="${reservations.isEmpty()}" class="text-center py-12">
+    <p class="text-base-content/70 mb-4">No reservations yet.</p>
+    <a href="/reservations/create" class="btn btn-primary btn-sm">Create your first reservation</a>
+  </div>
+</section>
+</body>
+</html>

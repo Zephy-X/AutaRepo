@@ -1,0 +1,17 @@
+<div th:fragment="alerts" xmlns:th="http://www.thymeleaf.org">
+  <!-- Success Alert -->
+  <div th:if="${successMessage}" class="alert alert-success shadow-lg mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span th:text="${successMessage}">Success message</span>
+  </div>
+
+  <!-- Error Alert -->
+  <div th:if="${errorMessage}" class="alert alert-error shadow-lg mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0-12V3m0 0h0m6 0h0m0 6h0m0 6h0M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+    </svg>
+    <span th:text="${errorMessage}">Error message</span>
+  </div>
+</div>

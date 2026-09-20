@@ -1,9 +1,37 @@
+version: '3.8'
+
 services:
-  db:
+  postgres:
     image: postgres:16
+    container_name: local_postgres
     environment:
-      POSTGRES_USER: res_user
-      POSTGRES_PASSWORD: res_password
-      POSTGRES_DB: reservation_db
+      POSTGRES_DB: autorepodb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
     ports:
       - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: local_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@autorepo.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    volumes:
+      - ./servers.json:/pgadmin4/servers.json:ro
+    networks:
+      - default
+
+volumes:
+  pgdata:

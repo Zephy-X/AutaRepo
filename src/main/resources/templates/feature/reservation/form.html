@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::section})}">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reservation Form</title>
+</head>
+<body>
+<section>
+  <div class="card bg-base-200 border border-base-300 shadow-md max-w-2xl mx-auto">
+    <div class="card-body">
+      <h2 class="card-title text-xl font-bold mb-4">New Reservation</h2>
+
+      <form th:action="@{/reservations}" th:object="${reservationForm}" method="post" class="space-y-4">
+
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text font-medium">Vehicle</span></label>
+          <select class="select select-bordered w-full focus:select-primary"
+                  th:field="*{vehicleId}"
+                  th:classappend="${#fields.hasErrors('vehicleId')} ? 'select-error' : ''">
+            <option value="">-- Select a vehicle --</option>
+            <option th:each="vehicle : ${vehicles}" th:value="${vehicle.id}">
+              <span th:text="${vehicle.brand + ' ' + vehicle.model + ' (' + vehicle.licensePlate + ')'}">Toyota Corolla (ABC-1234)</span>
+            </option>
+          </select>
+          <label class="label" th:if="${#fields.hasErrors('vehicleId')}">
+            <span class="label-text-alt text-error text-xs" th:errors="*{vehicleId}">Validation error</span>
+          </label>
+        </div>
+
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text font-medium">Driver</span></label>
+          <select class="select select-bordered w-full focus:select-primary"
+                  th:field="*{userId}"
+                  th:classappend="${#fields.hasErrors('userId')} ? 'select-error' : ''">
+            <option value="">-- Select a driver --</option>
+            <option th:each="user : ${users}" th:value="${user.id}">
+              <span th:text="${user.fullName + ' (' + user.email + ')'}">John Doe (john@example.com)</span>
+            </option>
+          </select>
+          <label class="label" th:if="${#fields.hasErrors('userId')}">
+            <span class="label-text-alt text-error text-xs" th:errors="*{userId}">Validation error</span>
+          </label>
+        </div>
+
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text font-medium">Start Date & Time</span></label>
+          <input type="datetime-local" class="input input-bordered w-full focus:input-primary font-mono tabular-nums"
+                 th:field="*{startTime}"
+                 th:classappend="${#fields.hasErrors('startTime')} ? 'input-error' : ''" />
+          <label class="label" th:if="${#fields.hasErrors('startTime')}">
+            <span class="label-text-alt text-error text-xs" th:errors="*{startTime}">Validation error</span>
+          </label>
+          <label class="label">
+            <span class="label-text-alt text-xs text-base-content/60">Must be at least 2 hours from now</span>
+          </label>
+        </div>
+
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text font-medium">End Date & Time</span></label>
+          <input type="datetime-local" class="input input-bordered w-full focus:input-primary font-mono tabular-nums"
+                 th:field="*{endTime}"
+                 th:classappend="${#fields.hasErrors('endTime')} ? 'input-error' : ''" />
+          <label class="label" th:if="${#fields.hasErrors('endTime')}">
+            <span class="label-text-alt text-error text-xs" th:errors="*{endTime}">Validation error</span>
+          </label>
+          <label class="label">
+            <span class="label-text-alt text-xs text-base-content/60">Maximum duration: 14 days</span>
+          </label>
+        </div>
+
+        <div th:if="${errorMessage}" class="alert alert-warning shadow-lg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4v2m0-12V3m0 0h0m6 0h0m0 6h0m0 6h0M3 12a9 9 0 1118 0 9 9 0 01-18 0z" />
+          </svg>
+          <span th:text="${errorMessage}">Warning message</span>
+        </div>
+
+        <div class="card-actions justify-end mt-6 gap-2">
+          <a href="/reservations" class="btn btn-ghost">Cancel</a>
+          <button type="submit" class="btn btn-primary">Create Reservation</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+</body>
+</html>

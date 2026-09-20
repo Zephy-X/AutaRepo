@@ -1,0 +1,30 @@
+erDiagram
+    USERS ||--o{ RESERVATIONS : places
+    VEHICLES ||--o{ RESERVATIONS : assigned_to
+
+    USERS {
+        bigint id PK
+        string fullName
+        string email
+        string driverLicenseNumber
+    }
+
+    VEHICLES {
+        bigint id PK
+        string brand
+        string model
+        int year
+        string vin
+        string licensePlate
+        boolean isAvailable
+    }
+
+    RESERVATIONS {
+        bigint id PK
+        bigint vehicle_id FK
+        bigint user_id FK
+        timestamp startTime
+        timestamp endTime
+        string state
+        timestamp createdAt
+    }
