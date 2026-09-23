@@ -1,0 +1,19 @@
+flowchart TD
+    startNode((Start)) --> ReceiveReq["Receive Create Request<br>(resource_id, start_time, end_time)"]
+
+    ReceiveReq --> CheckResource{"Target Car exists<br>in inventory?"}
+    CheckResource -- No --> ErrResource["Return error:<br>RESOURCE_NOT_FOUND"]
+    ErrResource --> endErr1((End With Error))
+
+    CheckResource -- Yes --> CheckInterval{"Is interval valid?<br>(start < end)?"}
+    CheckInterval -- No --> ErrInterval["Return error:<br>INVALID_INTERVAL"]
+    ErrInterval --> endErr2((End With Error))
+
+    CheckInterval -- Yes --> CheckPast{"Is start time in future?<br>(start > currentTime)?"}
+    CheckPast -- No --> ErrPast["Return error:<br>INTERVAL_IN_PAST"]
+    ErrPast --> endErr3((End With Error))
+
+    CheckPast -- Yes --> CreateRecord["Instantiate Reservation<br>- state = DRAFT<br>- Car is NOT allocated"]
+    CreateRecord --> Persist["Persist to Storage"]
+    Persist --> ReturnSuccess["Return Reservation ID<br>and state DRAFT"]
+    ReturnSuccess --> endSuccess((Success))

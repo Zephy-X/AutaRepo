@@ -1,0 +1,19 @@
+flowchart TD
+    startNode((Start)) --> ReceiveQuery["Receive Availability Query<br>(resource_id, start_time, end_time)"]
+
+    ReceiveQuery --> CheckRes{"Target Car<br>exists?"}
+    CheckRes -- No --> ErrRes["Return error:<br>RESOURCE_NOT_FOUND"]
+    ErrRes --> endErr1((End With Error))
+
+    CheckRes -- Yes --> CheckSyntax{"Is start < end<br>(BR-01)?"}
+    CheckSyntax -- No --> ErrSyntax["Return error:<br>INVALID_INTERVAL"]
+    ErrSyntax --> endErr2((End With Error))
+
+    CheckSyntax -- Yes --> FetchConfirmed["Query all CONFIRMED reservations<br>for this Car"]
+    FetchConfirmed --> EvalOverlap{"Does any CONFIRMED booking<br>overlap query interval?<br>max(s1,s2) < min(e1,e2)"}
+
+    EvalOverlap -- Yes --> RetUnavail["Return Result:<br>UNAVAILABLE"]
+    EvalOverlap -- No --> RetAvail["Return Result:<br>AVAILABLE"]
+
+    RetUnavail --> endQuery((End Query))
+    RetAvail --> endQuery
