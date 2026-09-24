@@ -10,6 +10,9 @@
   <!-- External Styles -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet" type="text/css" />
+
+  <!-- Add HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 </head>
 
 <body class="min-h-screen bg-base-100 flex flex-col text-base-content antialiased">
@@ -26,5 +29,30 @@
   <footer class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300 text-xs">
     <p>&copy; AutoRepo Fleet Management Portal</p>
   </footer>
+
+  <script>
+    function autoDismissAlerts(root = document) {
+      root.querySelectorAll('.alert').forEach(alert => {
+        // Prevent setting multiple timers if already initialized
+        if (alert.dataset.dismissTimeout) return;
+        alert.dataset.dismissTimeout = "true";
+
+        // Smooth fade out transition
+        alert.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+
+        setTimeout(() => {
+          alert.style.opacity = '0';
+          alert.style.transform = 'translateY(-6px)';
+          setTimeout(() => alert.remove(), 500); // Remove from DOM after fade completes
+        }, 3000);
+      });
+    }
+
+    // Run on initial page load
+    document.addEventListener('DOMContentLoaded', () => autoDismissAlerts());
+
+    // Run on HTMX dynamic swaps
+    document.addEventListener('htmx:afterSettle', (evt) => autoDismissAlerts(evt.detail.elt));
+  </script>
 </body>
 </html>

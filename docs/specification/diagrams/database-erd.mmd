@@ -4,27 +4,26 @@ erDiagram
 
     USERS {
         bigint id PK
-        string fullName
-        string email
-        string driverLicenseNumber
+        string fullName "Client display name (unauthenticated in v0.1)"
+        string email "Client contact reference"
     }
 
     VEHICLES {
         bigint id PK
-        string brand
-        string model
-        int year
-        string vin
-        string licensePlate
-        boolean isAvailable
+        string brand "Vehicle brand / make"
+        string model "Vehicle model"
+        int year "Manufacturing year"
+        string licensePlate "Unique vehicle registration plate"
+        boolean isActive "Operational status: true = available for booking, false = maintenance"
+        boolean requiresApproval "Prepares for v0.2 change: true = luxury/special car needing approval"
     }
 
     RESERVATIONS {
         bigint id PK
-        bigint vehicle_id FK
-        bigint user_id FK
-        timestamp startTime
-        timestamp endTime
-        string state
-        timestamp createdAt
+        bigint vehicle_id FK "References VEHICLES(id)"
+        bigint user_id FK "References USERS(id)"
+        timestamp startTime "Start boundary [startTime, endTime)"
+        timestamp endTime "End boundary [startTime, endTime)"
+        string state "Enum: DRAFT | CONFIRMED | CANCELLED"
+        timestamp createdAt "Timestamp when draft was instantiated"
     }

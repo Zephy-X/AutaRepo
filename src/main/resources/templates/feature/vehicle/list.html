@@ -37,8 +37,8 @@
         <td class="font-mono text-xs" th:text="${vehicle.vin}">17-digit-vin-here</td>
         <td th:text="${vehicle.year}">2024</td>
         <td>
-          <span th:if="${vehicle.available}" class="badge badge-success badge-sm">Available</span>
-          <span th:if="not ${vehicle.available}" class="badge badge-neutral badge-sm">Unavailable</span>
+          <span th:if="${vehicle.active}" class="badge badge-success badge-sm">Active</span>
+          <span th:if="${!vehicle.active}" class="badge badge-neutral badge-sm">Inactive</span>
         </td>
         <td>
           <div class="join">

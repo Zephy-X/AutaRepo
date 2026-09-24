@@ -8,68 +8,202 @@
 </head>
 <body>
 <section class="flex flex-col gap-6">
-  <div class="flex justify-between items-center">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight">Reservations</h1>
-      <p class="text-sm text-base-content/70 mt-1" th:text="'Total reservations: ' + ${reservations.size()}">Total reservations: 0</p>
-    </div>
-    <a href="/reservations/create" class="btn btn-primary btn-sm">+ New Reservation</a>
+  <div>
+    <h1 class="text-2xl font-bold tracking-tight">Reservations</h1>
+    <p class="text-sm text-base-content/70 mt-1">Baseline v0.1 flow: availability check -> draft -> confirm/cancel</p>
   </div>
 
-  <div class="overflow-x-auto rounded-box border border-base-300 bg-base-200/50">
-    <table class="table table-zebra w-full">
-      <thead class="bg-base-200 text-xs text-base-content/70">
-      <tr>
-        <th>ID</th>
-        <th>Vehicle</th>
-        <th>Driver</th>
-        <th>Start</th>
-        <th>End</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr th:each="reservation : ${reservations}">
-        <td class="font-mono text-sm" th:text="${reservation.id}">#123</td>
-        <td>
-          <span th:text="${reservation.vehicle.brand + ' ' + reservation.vehicle.model}">Toyota Corolla</span>
-          <br />
-          <span class="text-xs text-base-content/60 font-mono" th:text="${reservation.vehicle.licensePlate}">ABC-1234</span>
-        </td>
-        <td th:text="${reservation.user.fullName}">John Doe</td>
-        <td class="font-mono tabular-nums text-xs">
-          <span th:text="${#temporals.format(reservation.startTime, 'dd.MM.yyyy HH:mm')}">01.01.2024 14:00</span>
-        </td>
-        <td class="font-mono tabular-nums text-xs">
-          <span th:text="${#temporals.format(reservation.endTime, 'dd.MM.yyyy HH:mm')}">02.01.2024 10:00</span>
-        </td>
-        <td>
-          <span th:if="${reservation.state != null and reservation.state.name() == 'DRAFT'}" class="badge badge-warning badge-sm">Draft</span>
-          <span th:if="${reservation.state != null and reservation.state.name() == 'CONFIRMED'}" class="badge badge-success badge-sm">Confirmed</span>
-          <span th:if="${reservation.state != null and reservation.state.name() == 'CANCELLED'}" class="badge badge-error badge-sm">Cancelled</span>
-          <span th:if="${reservation.state != null and reservation.state.name() != 'DRAFT' and reservation.state.name() != 'CONFIRMED' and reservation.state.name() != 'CANCELLED'}"
-                class="badge badge-ghost badge-sm"
-                th:text="${reservation.state}">Unknown</span>
-        </td>
-        <td>
-          <div class="join">
-            <form th:if="${reservation.state != null and reservation.state.name() == 'DRAFT'}" th:action="@{/reservations/{id}/confirm(id=${reservation.id})}" method="post" class="inline">
-              <button type="submit" class="btn btn-xs btn-ghost join-item">Confirm</button>
-            </form>
-            <form th:if="${reservation.state == null or reservation.state.name() != 'CANCELLED'}" th:action="@{/reservations/{id}/cancel(id=${reservation.id})}" method="post" class="inline">
-              <button type="submit" class="btn btn-xs btn-error btn-ghost join-item" onclick="return confirm('Cancel reservation?')">Cancel</button>
-            </form>
+  <div class="card bg-base-200 border border-base-300 shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-lg">Step 1 & 2: Check Availability and Create Draft</h2>
+
+      <form id="reservationForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- Vehicle -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Vehicle</span></label>
+          <select class="select select-bordered w-full"
+                  id="vehicleId"
+                  name="vehicleId"
+                  th:field="*{reservationForm.vehicleId}">
+            <option value="">-- Select a vehicle --</option>
+            <option th:each="vehicle : ${vehicles}"
+                    th:value="${vehicle.id}"
+                    th:text="${vehicle.brand + ' ' + vehicle.model + ' (' + vehicle.licensePlate + ')' + (vehicle.active ? '' : ' [INACTIVE]')}">
+            </option>
+          </select>
+        </div>
+
+        <!-- User -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">User</span></label>
+          <select class="select select-bordered w-full"
+                  id="userId"
+                  name="userId"
+                  th:field="*{reservationForm.userId}">
+            <option value="">-- Select a user --</option>
+            <option th:each="user : ${users}"
+                    th:value="${user.id}"
+                    th:text="${user.fullName + ' (' + user.email + ')'}">
+            </option>
+          </select>
+        </div>
+
+        <!-- Start Date & Hour -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">Start Date & Time</span></label>
+          <div class="flex gap-2">
+            <input type="date"
+                   name="startDate"
+                   class="input input-bordered flex-1"
+                   th:value="${reservationForm.startDate()}"
+                   required />
+            <select name="startHour" class="select select-bordered w-32">
+              <option th:each="h : ${#numbers.sequence(0, 23)}"
+                      th:value="${h}"
+                      th:selected="${reservationForm.startHour() == h}"
+                      th:text="${#numbers.formatInteger(h, 2) + ':00'}">
+              </option>
+            </select>
           </div>
-        </td>
-      </tr>
-      </tbody>
-    </table>
+        </div>
+
+        <!-- End Date & Hour -->
+        <div class="form-control">
+          <label class="label"><span class="label-text">End Date & Time</span></label>
+          <div class="flex gap-2">
+            <input type="date"
+                   name="endDate"
+                   class="input input-bordered flex-1"
+                   th:value="${reservationForm.endDate()}"
+                   required />
+            <select name="endHour" class="select select-bordered w-32">
+              <option th:each="h : ${#numbers.sequence(0, 23)}"
+                      th:value="${h}"
+                      th:selected="${reservationForm.endHour() == h}"
+                      th:text="${#numbers.formatInteger(h, 2) + ':00'}">
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Actions & Status Indicator -->
+        <div class="md:col-span-2 flex items-center gap-3 mt-2">
+          <!-- HTMX Check Availability -->
+          <button class="btn btn-outline"
+                  type="button"
+                  hx-post="/reservations/availability"
+                  hx-include="#reservationForm"
+                  hx-target="#availability-status"
+                  hx-swap="outerHTML">
+            Check Availability
+          </button>
+
+          <!-- HTMX Create Draft (replaces whole reservation section) -->
+          <button class="btn btn-primary"
+                  type="button"
+                  hx-post="/reservations"
+                  hx-include="#reservationForm"
+                  hx-target="section"
+                  hx-swap="outerHTML">
+            Add to Basket / Create Draft
+          </button>
+
+          <!-- Target placeholder for availability status -->
+          <div id="availability-status" th:fragment="availability-status">
+            <span class="badge badge-success" th:if="${availabilityStatus == 'AVAILABLE'}">AVAILABLE</span>
+            <span class="badge badge-error" th:if="${availabilityStatus == 'UNAVAILABLE'}">UNAVAILABLE</span>
+            <span class="badge badge-warning" th:if="${availabilityStatus == 'INVALID'}">INVALID DATES</span>
+          </div>
+        </div>
+      </form>
+    </div>
   </div>
 
-  <div th:if="${reservations.isEmpty()}" class="text-center py-12">
-    <p class="text-base-content/70 mb-4">No reservations yet.</p>
-    <a href="/reservations/create" class="btn btn-primary btn-sm">Create your first reservation</a>
+  <div class="card bg-base-200 border border-base-300 shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-lg">Step 3: Drafts / Checkout</h2>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Vehicle</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>State</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="reservation : ${draftReservations}">
+            <td th:text="${reservation.id}" class="font-mono"></td>
+            <td th:text="${reservation.vehicle.brand + ' ' + reservation.vehicle.model}"></td>
+            <td th:text="${#temporals.format(reservation.startTime, 'dd.MM.yyyy HH:mm')}"></td>
+            <td th:text="${#temporals.format(reservation.endTime, 'dd.MM.yyyy HH:mm')}"></td>
+            <td><span class="badge badge-warning">DRAFT</span></td>
+            <td class="flex gap-2">
+              <form th:action="@{/reservations/{id}/confirm(id=${reservation.id})}" method="post">
+                <button type="submit" class="btn btn-xs btn-success">Complete Booking (Confirm)</button>
+              </form>
+              <form th:action="@{/reservations/{id}/cancel(id=${reservation.id})}" method="post">
+                <button type="submit" class="btn btn-xs btn-error"
+                        th:disabled="${!#temporals.createNow().isBefore(reservation.startTime)}">Cancel Reservation</button>
+              </form>
+            </td>
+          </tr>
+          <tr th:if="${draftReservations.isEmpty()}">
+            <td colspan="6" class="text-center text-base-content/60">No active drafts.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card bg-base-200 border border-base-300 shadow-sm">
+    <div class="card-body">
+      <h2 class="card-title text-lg">All Reservations</h2>
+      <div class="overflow-x-auto">
+        <table class="table table-zebra w-full">
+          <thead>
+          <tr>
+            <th>ID</th>
+            <th>Vehicle</th>
+            <th>User</th>
+            <th>Start</th>
+            <th>End</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr th:each="reservation : ${reservations}">
+            <td class="font-mono" th:text="${reservation.id}"></td>
+            <td th:text="${reservation.vehicle.brand + ' ' + reservation.vehicle.model}"></td>
+            <td th:text="${reservation.user.fullName}"></td>
+            <td th:text="${#temporals.format(reservation.startTime, 'dd.MM.yyyy HH:mm')}"></td>
+            <td th:text="${#temporals.format(reservation.endTime, 'dd.MM.yyyy HH:mm')}"></td>
+            <td>
+              <span th:if="${reservation.state.name() == 'DRAFT'}" class="badge badge-warning">DRAFT</span>
+              <span th:if="${reservation.state.name() == 'CONFIRMED'}" class="badge badge-success">CONFIRMED</span>
+              <span th:if="${reservation.state.name() == 'CANCELLED'}" class="badge badge-error">CANCELLED</span>
+            </td>
+            <td>
+              <form th:if="${reservation.state.name() == 'DRAFT'}" th:action="@{/reservations/{id}/confirm(id=${reservation.id})}" method="post" class="inline">
+                <button type="submit" class="btn btn-xs btn-success">Complete Booking (Confirm)</button>
+              </form>
+              <form th:if="${reservation.state.name() == 'DRAFT' or reservation.state.name() == 'CONFIRMED'}"
+                    th:action="@{/reservations/{id}/cancel(id=${reservation.id})}" method="post" class="inline">
+                <button type="submit" class="btn btn-xs btn-error"
+                        th:disabled="${!#temporals.createNow().isBefore(reservation.startTime)}">Cancel Reservation</button>
+              </form>
+            </td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </section>
 </body>
