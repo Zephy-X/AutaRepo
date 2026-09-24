@@ -100,15 +100,15 @@ docker compose down -v
 
 > **Note:** Teacher recommended plantUML for diagrams, i feel like mermaid code directly in our codebase would be better (example in docs/architecture/erd.mmd)
 
-- [ ] All four core operations have complete textual specification slices
-- [ ] Every accepted requirement passed the requirement acceptance gate
-- [ ] Shared business rules/invariants are defined once
-- [ ] One use-case/actor-goal view covers the minimum system
-- [ ] One Reservation lifecycle statechart covers the minimum system
-- [ ] Slices, requirements, use-case view, and statechart are mutually consistent
-- [ ] Baseline v0.1 was explicitly accepted by the team
-- [ ] The AI-generated app demonstrates all four core operations
-- [ ] One success + one relevant negative/boundary example was actually executed for every slice
+- [x] All four core operations have complete textual specification slices
+- [x] Every accepted requirement passed the requirement acceptance gate
+- [x] Shared business rules/invariants are defined once
+- [x] One use-case/actor-goal view covers the minimum system
+- [x] One Reservation lifecycle statechart covers the minimum system
+- [x] Slices, requirements, use-case view, and statechart are mutually consistent
+- [x] Baseline v0.1 was explicitly accepted by the team
+- [x] The AI-generated app demonstrates all four core operations
+- [x] One success + one relevant negative/boundary example was actually executed for every slice
 - [ ] Change impact was analyzed before editing
 - [ ] Affected and unaffected parts are explicit
 - [ ] Any new Approve slice is fully specified

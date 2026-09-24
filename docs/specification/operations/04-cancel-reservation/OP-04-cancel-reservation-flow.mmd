@@ -1,0 +1,28 @@
+flowchart TD
+    startNode((Start)) --> ReceiveCancel["Receive Cancel Request<br>(reservation_id)"]
+
+    ReceiveCancel --> FindRes{"Reservation<br>exists?"}
+    FindRes -- No --> ErrNotFound["Return error:<br>RESERVATION_NOT_FOUND"]
+    ErrNotFound --> endErr1((End With Error))
+
+    FindRes -- Yes --> CheckEligible{"Is state in<br>{DRAFT, CONFIRMED}?"}
+    CheckEligible -- Already CANCELLED --> ErrCancelled["Return error:<br>ALREADY_CANCELLED"]
+    CheckEligible -- Other invalid --> ErrState["Return error:<br>INVALID_STATE_TRANSITION"]
+    ErrCancelled --> endErr2((End With Error))
+    ErrState --> endErr2
+
+    CheckEligible -- Yes --> CheckTime{"Is currentTime < start?<br>(Strict window check per BR-03)"}
+    CheckTime -- No (currentTime >= start) --> ErrTimePassed["Return error:<br>CANCELLATION_WINDOW_CLOSED"]
+ErrTimePassed --> endErr3((End With Error))
+
+CheckTime -- Yes --> TransitionCancel["Set state = CANCELLED"]
+TransitionCancel --> ReleaseAllocation{"Was previous state<br>CONFIRMED?"}
+
+ReleaseAllocation -- Yes --> FreeResource["Release car allocation<br>(Car becomes AVAILABLE for interval)"]
+ReleaseAllocation -- No (was DRAFT) --> SkipFree["No inventory release needed"]
+
+FreeResource --> PersistCancel["Persist CANCELLED state"]
+SkipFree --> PersistCancel
+
+PersistCancel --> ReturnSuccess["Return updated record<br>(state: CANCELLED)"]
+ReturnSuccess --> endSuccess((Success))

@@ -46,7 +46,7 @@ public class ReservationPersistenceSpikeTest {
                 .year(2024)
                 .vin("12345678901234567")
                 .licensePlate("ABC-1234")
-                .isAvailable(true)
+                .isActive(true)
                 .build();
         Vehicle savedVehicle = vehicleRepository.save(vehicle);
 

@@ -1,0 +1,25 @@
+flowchart TD
+    startNode((Start)) --> ReceiveConfirm["Receive Confirm Request<br>(reservation_id)"]
+
+    ReceiveConfirm --> FindReservation{"Reservation<br>exists?"}
+    FindReservation -- No --> ErrNotFound["Return error:<br>RESERVATION_NOT_FOUND"]
+    ErrNotFound --> endErr1((End With Error))
+
+    FindReservation -- Yes --> CheckState{"Is current state<br>== DRAFT?"}
+    CheckState -- No --> ErrState["Return error:<br>INVALID_STATE_TRANSITION<br>(Already confirmed or cancelled)"]
+    ErrState --> endErr2((End With Error))
+
+    CheckState -- Yes --> CheckCarActive{"Is assigned Car<br>active?"}
+    CheckCarActive -- No --> ErrCarInactive["Return error:<br>RESOURCE_INACTIVE"]
+    ErrCarInactive --> endErr3((End With Error))
+
+    CheckCarActive -- Yes --> LockCheck["Begin Atomic Conflict Check<br>(Evaluated under BR-02)"]
+    LockCheck --> DetectCollision{"Any conflicting<br>CONFIRMED reservation<br>for this Car?"}
+
+    DetectCollision -- Yes / Race lost --> ErrConflict["Return error:<br>CONFLICT_OVERLAP<br>(Reservation remains DRAFT)"]
+    ErrConflict --> endErr4((End With Error))
+
+    DetectCollision -- No / Exclusive lock acquired --> UpdateState["Update Reservation:<br>state = CONFIRMED"]
+    UpdateState --> CommitAllocation["Commit exclusive car lock<br>to inventory schedule"]
+    CommitAllocation --> ReturnConfirmed["Return updated record<br>(state: CONFIRMED)"]
+    ReturnConfirmed --> endSuccess((Success))

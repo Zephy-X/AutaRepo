@@ -22,5 +22,5 @@ public class Vehicle {
     private int year;
     private String vin;
     private String licensePlate;
-    private boolean isAvailable;
+    private boolean isActive;
 }
