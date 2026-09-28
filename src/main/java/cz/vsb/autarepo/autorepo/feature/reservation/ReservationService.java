@@ -41,6 +41,11 @@ public class ReservationService {
     }
 
     @Transactional(readOnly = true)
+    public List<Reservation> findPendingApprovals() {
+        return reservationRepository.findByState(ReservationState.PENDING_APPROVAL);
+    }
+
+    @Transactional(readOnly = true)
     public Reservation findById(Long id) {
         return reservationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation not found with id: " + id));
@@ -78,7 +83,13 @@ public class ReservationService {
             throw new IllegalStateException("RESOURCE_INACTIVE");
         }
 
-        // Check for overlaps with confirmed reservations
+        // BR-05: Luxury or restricted vehicles route to PENDING_APPROVAL
+        if (reservation.getVehicle().isRequiresApproval()) {
+            reservation.setState(ReservationState.PENDING_APPROVAL);
+            return reservationRepository.save(reservation);
+        }
+
+        // Standard vehicles check conflict and transition to CONFIRMED
         boolean hasConflict = reservationRepository
                 .existsByVehicleIdAndStateAndStartTimeLessThanAndEndTimeGreaterThan(
                         reservation.getVehicle().getId(),
@@ -97,6 +108,56 @@ public class ReservationService {
         return confirmed;
     }
 
+    // OP-05: Approve Reservation
+    public Reservation approveReservation(Long reservationId) {
+        Reservation reservation = findById(reservationId);
+
+        if (reservation.getState() != ReservationState.PENDING_APPROVAL) {
+            throw new IllegalStateException("INVALID_STATE_TRANSITION");
+        }
+
+        if (!reservation.getVehicle().isActive()) {
+            throw new IllegalStateException("RESOURCE_INACTIVE");
+        }
+
+        // BR-06: Expiration window check
+        if (!LocalDateTime.now().isBefore(reservation.getStartTime())) {
+            reservation.setState(ReservationState.EXPIRED);
+            reservationRepository.save(reservation);
+            throw new IllegalStateException("APPROVAL_WINDOW_EXPIRED");
+        }
+
+        // Conflict check against any other confirmed reservations
+        boolean hasConflict = reservationRepository
+                .existsByVehicleIdAndStateAndStartTimeLessThanAndEndTimeGreaterThan(
+                        reservation.getVehicle().getId(),
+                        ReservationState.CONFIRMED,
+                        reservation.getEndTime(),
+                        reservation.getStartTime()
+                );
+
+        if (hasConflict) {
+            throw new IllegalStateException("CONFLICT_OVERLAP");
+        }
+
+        reservation.setState(ReservationState.CONFIRMED);
+        Reservation confirmed = reservationRepository.save(reservation);
+        notificationService.notifyReservationConfirmed(confirmed);
+        return confirmed;
+    }
+
+    // OP-06: Reject Reservation
+    public Reservation rejectReservation(Long reservationId) {
+        Reservation reservation = findById(reservationId);
+
+        if (reservation.getState() != ReservationState.PENDING_APPROVAL) {
+            throw new IllegalStateException("INVALID_STATE_TRANSITION");
+        }
+
+        reservation.setState(ReservationState.REJECTED);
+        return reservationRepository.save(reservation);
+    }
+
     public Reservation cancelReservation(Long reservationId) {
         Reservation reservation = findById(reservationId);
 
@@ -104,7 +165,9 @@ public class ReservationService {
             throw new IllegalStateException("ALREADY_CANCELLED");
         }
 
+        // Allow cancellation from DRAFT, PENDING_APPROVAL, and CONFIRMED
         if (reservation.getState() != ReservationState.DRAFT
+                && reservation.getState() != ReservationState.PENDING_APPROVAL
                 && reservation.getState() != ReservationState.CONFIRMED) {
             throw new IllegalStateException("INVALID_STATE_TRANSITION");
         }
@@ -155,22 +218,15 @@ public class ReservationService {
 
     public String resolveErrorMessage(String errorCode) {
         return switch (errorCode) {
-            case "CONFLICT_OVERLAP" -> "Vehicle conflict: another reservation was confirmed for this time. Booking remains DRAFT.";
+            case "CONFLICT_OVERLAP" -> "Vehicle conflict: another reservation was confirmed for this time slot.";
+            case "APPROVAL_WINDOW_EXPIRED" -> "Approval window expired: reservation start time has already passed.";
             case "CANCELLATION_WINDOW_CLOSED" -> "Cancellation window closed: reservation has already started.";
             case "ALREADY_CANCELLED" -> "Reservation is already cancelled.";
-            case "RESOURCE_INACTIVE" -> "Vehicle is inactive and cannot be confirmed.";
+            case "RESOURCE_INACTIVE" -> "Vehicle is inactive and cannot be reserved.";
             case "INVALID_STATE_TRANSITION" -> "Invalid state transition for this operation.";
             case "INVALID_INTERVAL" -> "Invalid interval. Start time must be before end time.";
             case "INTERVAL_IN_PAST" -> "Interval start must be in the future.";
             default -> errorCode;
         };
-    }
-
-    @Transactional(readOnly = true)
-    public boolean isCancellationAllowed(Reservation reservation) {
-        if (reservation.getState() == ReservationState.CANCELLED) {
-            return false;
-        }
-        return LocalDateTime.now().isBefore(reservation.getStartTime());
     }
 }

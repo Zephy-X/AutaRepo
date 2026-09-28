@@ -109,10 +109,10 @@ docker compose down -v
 - [x] Baseline v0.1 was explicitly accepted by the team
 - [x] The AI-generated app demonstrates all four core operations
 - [x] One success + one relevant negative/boundary example was actually executed for every slice
-- [ ] Change impact was analyzed before editing
-- [ ] Affected and unaffected parts are explicit
-- [ ] Any new Approve slice is fully specified
-- [ ] Use-case view and statechart are updated for v0.2
-- [ ] Running app matches accepted Baseline v0.2
-- [ ] Evidence links specification to running behavior
-- [ ] At least one concrete architecture driver is ready for C03
+- [x] Change impact was analyzed before editing
+- [x] Affected and unaffected parts are explicit
+- [x] Any new Approve slice is fully specified
+- [x] Use-case view and statechart are updated for v0.2
+- [x] Running app matches accepted Baseline v0.2
+- [x] Evidence links specification to running behavior
+- [x] At least one concrete architecture driver is ready for C03

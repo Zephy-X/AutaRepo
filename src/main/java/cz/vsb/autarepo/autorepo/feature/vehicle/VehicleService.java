@@ -40,6 +40,7 @@ public class VehicleService {
                 .vin(form.vin())
                 .licensePlate(form.licensePlate())
                 .isActive(true)
+                .requiresApproval(false)
                 .build();
         return vehicleRepository.save(vehicle);
     }
@@ -57,6 +58,12 @@ public class VehicleService {
     public void toggleAvailability(Long id) {
         Vehicle vehicle = findById(id);
         vehicle.setActive(!vehicle.isActive());
+        vehicleRepository.save(vehicle);
+    }
+
+    public void toggleLuxury(Long id) {
+        Vehicle vehicle = findById(id);
+        vehicle.setRequiresApproval(!vehicle.isRequiresApproval());
         vehicleRepository.save(vehicle);
     }
 

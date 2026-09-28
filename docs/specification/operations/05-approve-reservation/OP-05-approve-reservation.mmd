@@ -1,0 +1,16 @@
+flowchart TD
+    A([Start: Approver clicks Approve]) --> B[Retrieve Reservation by ID]
+    B --> C{Reservation exists?}
+    C -- No --> E1[Reject: RESERVATION_NOT_FOUND]
+    C -- Yes --> D{User has Approver Role?}
+    D -- No --> E2[Reject: ACCESS_DENIED]
+    D -- Yes --> E{State == PENDING_APPROVAL?}
+    E -- No --> E3[Reject: INVALID_STATE_TRANSITION]
+    E -- Yes --> F{Target Car is Active?}
+    F -- No --> E4[Reject: RESOURCE_INACTIVE]
+    F -- Yes --> G{currentTime < startTime?}
+    G -- No --> E5[Reject: APPROVAL_WINDOW_EXPIRED<br/>State -> EXPIRED]
+    G -- Yes --> H{Overlap with any CONFIRMED<br/>Reservation on this Car?}
+    H -- Yes --> E6[Reject: CONFLICT_OVERLAP<br/>State remains PENDING_APPROVAL]
+    H -- No --> I[Set State = CONFIRMED<br/>Record Approver ID & Timestamp]
+    I --> J([End: Success, Reservation Confirmed])

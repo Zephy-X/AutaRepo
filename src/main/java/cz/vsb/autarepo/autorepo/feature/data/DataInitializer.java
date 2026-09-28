@@ -73,6 +73,7 @@ public class DataInitializer implements CommandLineRunner {
                 .vin("TMBJG12Z1K1234567")
                 .licensePlate("OV-123AB")
                 .isActive(true)
+                .requiresApproval(false)
                 .build();
 
         Vehicle corolla = Vehicle.builder()
@@ -82,6 +83,7 @@ public class DataInitializer implements CommandLineRunner {
                 .vin("JTDBR32E700123456")
                 .licensePlate("TK-987CD")
                 .isActive(true)
+                .requiresApproval(false)
                 .build();
 
         Vehicle golf = Vehicle.builder()
@@ -91,6 +93,7 @@ public class DataInitializer implements CommandLineRunner {
                 .vin("WVWZZZ1KZAW123456")
                 .licensePlate("VG-456EF")
                 .isActive(true)
+                .requiresApproval(false)
                 .build();
 
         Vehicle superb = Vehicle.builder()
@@ -100,6 +103,7 @@ public class DataInitializer implements CommandLineRunner {
                 .vin("TMBJG45L2M7654321")
                 .licensePlate("SB-001GH")
                 .isActive(true)
+                .requiresApproval(true) // Seeded as luxury / approval required
                 .build();
 
         List<Vehicle> vehicles = vehicleRepository.saveAll(List.of(octavia, corolla, golf, superb));

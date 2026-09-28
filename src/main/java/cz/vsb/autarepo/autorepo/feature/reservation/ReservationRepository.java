@@ -8,12 +8,12 @@ import java.util.List;
 
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
-    boolean existsByVehicleIdAndStateAndStartTimeLessThanAndEndTimeGreaterThan(
-        Long vehicleId,
-        ReservationState state,
-        LocalDateTime requestedEnd,
-        LocalDateTime requestedStart
-    );
-
     List<Reservation> findByState(ReservationState state);
+
+    boolean existsByVehicleIdAndStateAndStartTimeLessThanAndEndTimeGreaterThan(
+            Long vehicleId,
+            ReservationState state,
+            LocalDateTime endTime,
+            LocalDateTime startTime
+    );
 }
