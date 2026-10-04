@@ -17,14 +17,35 @@ flowchart TD
     DecideConfirm -- Abandon / Cancel --> CancelDraft["OP-04: Cancel Reservation<br>State: CANCELLED"]
     CancelDraft --> EndDraftCancel((End))
 
-%% OP-03 Confirm Reservation
+%% OP-03 Confirm Reservation routing
     DecideConfirm -- Click 'Complete Booking' --> OP03["OP-03: Confirm Reservation"]
-    OP03 --> CheckConflict{"Conflict check:<br>Any overlapping CONFIRMED bookings?"}
+    OP03 --> IsLuxury{"Is Resource a Luxury Car?"}
 
+%% Standard Vehicle Branch
+    IsLuxury -- No --> CheckConflict{"Conflict check:<br>Any overlapping CONFIRMED bookings?"}
     CheckConflict -- Yes / Collision --> RejectConfirm["Booking Rejected<br>Remains DRAFT"]
     RejectConfirm --> Step1
-
     CheckConflict -- No --> CommitConfirm["System commits allocation<br>State: CONFIRMED<br>Car is now locked!"]
+
+%% Luxury Vehicle Branch (Pending Approval)
+    IsLuxury -- Yes --> SetPending["State: PENDING_APPROVAL<br>Placed in Approver Queue"]
+    SetPending --> ApproverAction{"Approver Decision before startTime?"}
+
+    ApproverAction -- Expired: now >= start --> StateExpired["State: EXPIRED<br>Request invalidated"]
+    StateExpired --> EndExpired((End))
+
+    ApproverAction -- Reject --> StateRejected["OP-06: Reject Reservation<br>State: REJECTED"]
+    StateRejected --> EndRejected((End))
+
+    ApproverAction -- "Cancel by User (now < start)" --> CancelPending["OP-04: Cancel Reservation<br>State: CANCELLED"]
+    CancelPending --> EndPendingCancel((End))
+
+    ApproverAction -- Approve --> CheckApproveConflict{"Conflict check:<br>Overlapping CONFIRMED bookings?"}
+    CheckApproveConflict -- Yes --> ConflictPending["Approval Rejected with CONFLICT_OVERLAP<br>Remains PENDING_APPROVAL"]
+    ConflictPending --> ApproverAction
+
+    CheckApproveConflict -- No --> OP05["OP-05: Approve Reservation<br>State: CONFIRMED<br>Car is now locked!"]
+    OP05 --> CommitConfirm
 
 %% Post-confirmation / Cancel
     CommitConfirm --> HasPlanChanged{"Change of plans before start time?"}

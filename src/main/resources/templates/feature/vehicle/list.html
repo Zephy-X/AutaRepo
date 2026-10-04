@@ -46,6 +46,13 @@
             <form th:action="@{/vehicles/{id}/toggle-availability(id=${vehicle.id})}" method="post" class="inline">
               <button type="submit" class="btn btn-xs btn-ghost join-item">Toggle</button>
             </form>
+            <form th:action="@{/vehicles/{id}/toggle-luxury(id=${vehicle.id})}" method="post" class="inline">
+              <button type="submit"
+                      class="btn btn-xs"
+                      th:classappend="${vehicle.requiresApproval} ? 'btn-secondary' : 'btn-outline'">
+                <span th:text="${vehicle.requiresApproval ? 'Luxury (Required)' : 'Standard'}"></span>
+              </button>
+            </form>
             <form th:action="@{/vehicles/{id}/delete(id=${vehicle.id})}" method="post" class="inline">
               <button type="submit" class="btn btn-xs btn-error btn-ghost join-item" onclick="return confirm('Delete vehicle?')">Delete</button>
             </form>

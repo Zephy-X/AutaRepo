@@ -12,7 +12,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Controller
 @RequestMapping("/reservations")
@@ -31,9 +30,7 @@ public class ReservationViewController {
 
     @GetMapping
     public String list(Model model) {
-        populateReservationFormData(model);
-        model.addAttribute("reservations", reservationService.findAll());
-        model.addAttribute("draftReservations", reservationService.findDrafts());
+        populatePageData(model);
 
         LocalDate today = LocalDate.now();
         int nextHour = (LocalDateTime.now().getHour() + 1) % 24;
@@ -41,7 +38,6 @@ public class ReservationViewController {
 
         model.addAttribute("reservationForm", defaultForm);
         model.addAttribute("availabilityStatus", null);
-        model.addAttribute("canCancelNow", LocalDateTime.now());
         model.addAttribute("pageTitle", "Reservations");
         return "feature/reservation/list";
     }
@@ -55,34 +51,27 @@ public class ReservationViewController {
         validateReservationDates(reservationForm, bindingResult);
 
         if (bindingResult.hasErrors()) {
-            populateReservationFormData(model);
-            model.addAttribute("reservations", reservationService.findAll());
-            model.addAttribute("draftReservations", reservationService.findDrafts());
+            populatePageData(model);
+            model.addAttribute("reservationForm", reservationForm);
             model.addAttribute("availabilityStatus", null);
-            model.addAttribute("canCancelNow", LocalDateTime.now());
-
             return isHtmx ? "feature/reservation/list :: section" : "feature/reservation/list";
         }
 
         try {
             Reservation reservation = reservationService.createReservation(reservationForm);
+            String msg = "Draft created (Reservation #" + reservation.getId() + "). Note: Vehicle is not locked yet!";
             if (isHtmx) {
-                model.addAttribute("successMessage", "Draft created (Reservation #" + reservation.getId() + "). Note: Vehicle is not locked yet!");
-                populateReservationFormData(model);
-                model.addAttribute("reservations", reservationService.findAll());
-                model.addAttribute("draftReservations", reservationService.findDrafts());
-                model.addAttribute("canCancelNow", LocalDateTime.now());
+                model.addAttribute("successMessage", msg);
+                populatePageData(model);
+                model.addAttribute("reservationForm", reservationForm);
                 return "feature/reservation/list :: section";
             }
-            redirectAttributes.addFlashAttribute("successMessage",
-                    "Draft created (Reservation #" + reservation.getId() + "). Note: Vehicle is not locked yet!");
+            redirectAttributes.addFlashAttribute("successMessage", msg);
         } catch (IllegalArgumentException e) {
             bindingResult.rejectValue("startDate", "reservation.startDate.invalid", reservationService.resolveErrorMessage(e.getMessage()));
-            populateReservationFormData(model);
-            model.addAttribute("reservations", reservationService.findAll());
-            model.addAttribute("draftReservations", reservationService.findDrafts());
+            populatePageData(model);
+            model.addAttribute("reservationForm", reservationForm);
             model.addAttribute("availabilityStatus", null);
-            model.addAttribute("canCancelNow", LocalDateTime.now());
             return isHtmx ? "feature/reservation/list :: section" : "feature/reservation/list";
         }
 
@@ -95,6 +84,7 @@ public class ReservationViewController {
                                     @RequestHeader(value = "HX-Request", required = false) boolean isHtmx,
                                     Model model) {
         validateReservationDates(reservationForm, bindingResult);
+        model.addAttribute("reservationForm", reservationForm);
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("availabilityStatus", "INVALID");
@@ -122,8 +112,34 @@ public class ReservationViewController {
     @PostMapping("/{id}/confirm")
     public String confirmReservation(@PathVariable Long id, RedirectAttributes redirectAttributes) {
         try {
-            reservationService.confirmReservation(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Reservation confirmed.");
+            Reservation res = reservationService.confirmReservation(id);
+            if (res.getState() == ReservationState.PENDING_APPROVAL) {
+                redirectAttributes.addFlashAttribute("successMessage", "Luxury vehicle requires approval. Request submitted to Fleet Manager.");
+            } else {
+                redirectAttributes.addFlashAttribute("successMessage", "Reservation confirmed.");
+            }
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", reservationService.resolveErrorMessage(e.getMessage()));
+        }
+        return "redirect:/reservations";
+    }
+
+    @PostMapping("/{id}/approve")
+    public String approveReservation(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            reservationService.approveReservation(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Reservation #" + id + " approved and confirmed.");
+        } catch (IllegalStateException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", reservationService.resolveErrorMessage(e.getMessage()));
+        }
+        return "redirect:/reservations";
+    }
+
+    @PostMapping("/{id}/reject")
+    public String rejectReservation(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            reservationService.rejectReservation(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Reservation #" + id + " rejected.");
         } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("errorMessage", reservationService.resolveErrorMessage(e.getMessage()));
         }
@@ -151,33 +167,26 @@ public class ReservationViewController {
 
         LocalDateTime now = LocalDateTime.now();
         if (!start.isAfter(now)) {
-            bindingResult.rejectValue(
-                    "startDate",
-                    "reservation.startDate.future",
-                    "Start time must be in the future"
-            );
+            bindingResult.rejectValue("startDate", "reservation.startDate.future", "Start time must be in the future");
         }
 
         if (!end.isAfter(start)) {
-            bindingResult.rejectValue(
-                    "endDate",
-                    "reservation.endDate.afterStart",
-                    "End time must be after start time"
-            );
+            bindingResult.rejectValue("endDate", "reservation.endDate.afterStart", "End time must be after start time");
         }
     }
 
-    private void populateReservationFormData(Model model) {
+    private void populatePageData(Model model) {
         model.addAttribute("vehicles", vehicleService.findAll());
         model.addAttribute("users", userService.findAll());
+        model.addAttribute("reservations", reservationService.findAll());
+        model.addAttribute("draftReservations", reservationService.findDrafts());
+        model.addAttribute("pendingApprovals", reservationService.findPendingApprovals());
+        model.addAttribute("canCancelNow", LocalDateTime.now());
         model.addAttribute("pageTitle", "Reservations");
     }
 
     private String renderFullFallback(Model model) {
-        populateReservationFormData(model);
-        model.addAttribute("reservations", reservationService.findAll());
-        model.addAttribute("draftReservations", reservationService.findDrafts());
-        model.addAttribute("canCancelNow", LocalDateTime.now());
+        populatePageData(model);
         return "feature/reservation/list";
     }
 }
