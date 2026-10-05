@@ -1,0 +1,30 @@
+flowchart LR
+    User(("User<br>(Client)"))
+    Approver(("Approver<br>(Fleet Manager)"))
+
+    subgraph SystemBoundary ["Reservation System (Baseline v0.2)"]
+        direction TB
+        UC1(["UC-01: Create Reservation<br>(Put car draft in basket)"])
+        UC2(["UC-02: Check Availability<br>(Browse cars & intervals)"])
+        UC3(["UC-03: Confirm Reservation<br>(Finalize booking / request approval)"])
+        UC4(["UC-04: Cancel Reservation<br>(Release draft, pending, or confirmed car)"])
+        UC5(["UC-05: Approve Reservation<br>(Authorize restricted luxury booking)"])
+        UC6(["UC-06: Reject Reservation<br>(Decline pending luxury booking)"])
+    end
+
+    User --> UC2
+    User --> UC1
+    User --> UC3
+    User --> UC4
+
+    Approver --> UC5
+    Approver --> UC6
+    Approver --> UC2
+
+    style SystemBoundary fill:#f9f9f9,stroke:#333,stroke-width:2px
+    style UC1 fill:#e1f5fe,stroke:#0288d1,stroke-width:1.5px
+    style UC2 fill:#e1f5fe,stroke:#0288d1,stroke-width:1.5px
+    style UC3 fill:#e8f5e9,stroke:#2e7d32,stroke-width:1.5px
+    style UC4 fill:#ffebee,stroke:#c62828,stroke-width:1.5px
+    style UC5 fill:#fff3e0,stroke:#ef6c00,stroke-width:1.5px
+    style UC6 fill:#fbe9e7,stroke:#d84315,stroke-width:1.5px

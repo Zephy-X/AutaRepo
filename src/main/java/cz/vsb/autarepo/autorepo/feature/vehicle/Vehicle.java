@@ -22,5 +22,11 @@ public class Vehicle {
     private int year;
     private String vin;
     private String licensePlate;
-    private boolean isAvailable;
+
+    @Builder.Default
+    private boolean isActive = true;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean requiresApproval = false;
 }

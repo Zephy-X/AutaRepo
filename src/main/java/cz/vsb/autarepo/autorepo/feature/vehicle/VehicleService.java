@@ -29,7 +29,7 @@ public class VehicleService {
 
     @Transactional(readOnly = true)
     public List<Vehicle> findAvailable() {
-        return vehicleRepository.findByIsAvailableTrue();
+        return vehicleRepository.findByIsActiveTrue();
     }
 
     public Vehicle createVehicle(VehicleForm form) {
@@ -39,7 +39,8 @@ public class VehicleService {
                 .year(form.year())
                 .vin(form.vin())
                 .licensePlate(form.licensePlate())
-                .isAvailable(true)
+                .isActive(true)
+                .requiresApproval(false)
                 .build();
         return vehicleRepository.save(vehicle);
     }
@@ -56,7 +57,13 @@ public class VehicleService {
 
     public void toggleAvailability(Long id) {
         Vehicle vehicle = findById(id);
-        vehicle.setAvailable(!vehicle.isAvailable());
+        vehicle.setActive(!vehicle.isActive());
+        vehicleRepository.save(vehicle);
+    }
+
+    public void toggleLuxury(Long id) {
+        Vehicle vehicle = findById(id);
+        vehicle.setRequiresApproval(!vehicle.isRequiresApproval());
         vehicleRepository.save(vehicle);
     }
 

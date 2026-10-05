@@ -96,20 +96,23 @@ docker compose down -v
 
 ---
 
-# Definition of Done (Stav pred C02)
+# Definition of Done — Before C03
 
-- [x] Tým 3–4 členové
-- [x] Spoločný repozitár (`Zephy-X/AutaRepo`)
-- [x] Jasný reservation domain (Rezervácia vozidiel)
-- [x] Resource (`Vehicle`) + Reservation + User (`userId`)
-- [x] Zmysluplné stavy rezervácie (`DRAFT`, `CONFIRMED`, `CANCELLED`)
-- [x] Operácie (`create`, `confirm`/`approve`, `cancel`, availability cez REST API)
-- [x] Common overlap rule (definované v Project Frame)
-- [x] 1 domain-specific business rule (definované v Project Frame)
-- [x] 1 external/system boundary (Notification Service definovaná v Project Frame)
-- [x] Kompletný Project Frame v `docs/intent-and-change.md`
-- [x] 1 Q/C/R/L future pressure (zvolená Q - Quality/Scale)
-- [x] 1 reviewed and integrated change (formálny code review v tíme)
-- [x] 1 vykonaný engineering spike (Spike A – pripojenie PostgreSQL a uloženie entity)
-- [x] Spike evidence + decision v `docs/evidence-and-evolution.md`
-- [x] Definovaný CP1 walking skeleton v `README.md`
+> **Note:** Teacher recommended plantUML for diagrams, i feel like mermaid code directly in our codebase would be better (example in docs/architecture/erd.mmd)
+
+- [x] All four core operations have complete textual specification slices
+- [x] Every accepted requirement passed the requirement acceptance gate
+- [x] Shared business rules/invariants are defined once
+- [x] One use-case/actor-goal view covers the minimum system
+- [x] One Reservation lifecycle statechart covers the minimum system
+- [x] Slices, requirements, use-case view, and statechart are mutually consistent
+- [x] Baseline v0.1 was explicitly accepted by the team
+- [x] The AI-generated app demonstrates all four core operations
+- [x] One success + one relevant negative/boundary example was actually executed for every slice
+- [x] Change impact was analyzed before editing
+- [x] Affected and unaffected parts are explicit
+- [x] Any new Approve slice is fully specified
+- [x] Use-case view and statechart are updated for v0.2
+- [x] Running app matches accepted Baseline v0.2
+- [x] Evidence links specification to running behavior
+- [x] At least one concrete architecture driver is ready for C03

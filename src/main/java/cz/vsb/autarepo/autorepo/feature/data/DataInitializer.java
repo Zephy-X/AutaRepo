@@ -72,7 +72,8 @@ public class DataInitializer implements CommandLineRunner {
                 .year(2019)
                 .vin("TMBJG12Z1K1234567")
                 .licensePlate("OV-123AB")
-                .isAvailable(true)
+                .isActive(true)
+                .requiresApproval(false)
                 .build();
 
         Vehicle corolla = Vehicle.builder()
@@ -81,7 +82,8 @@ public class DataInitializer implements CommandLineRunner {
                 .year(2020)
                 .vin("JTDBR32E700123456")
                 .licensePlate("TK-987CD")
-                .isAvailable(true)
+                .isActive(true)
+                .requiresApproval(false)
                 .build();
 
         Vehicle golf = Vehicle.builder()
@@ -90,7 +92,8 @@ public class DataInitializer implements CommandLineRunner {
                 .year(2018)
                 .vin("WVWZZZ1KZAW123456")
                 .licensePlate("VG-456EF")
-                .isAvailable(true)
+                .isActive(true)
+                .requiresApproval(false)
                 .build();
 
         Vehicle superb = Vehicle.builder()
@@ -99,7 +102,8 @@ public class DataInitializer implements CommandLineRunner {
                 .year(2021)
                 .vin("TMBJG45L2M7654321")
                 .licensePlate("SB-001GH")
-                .isAvailable(true)
+                .isActive(true)
+                .requiresApproval(true) // Seeded as luxury / approval required
                 .build();
 
         List<Vehicle> vehicles = vehicleRepository.saveAll(List.of(octavia, corolla, golf, superb));

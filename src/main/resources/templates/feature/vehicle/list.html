@@ -37,14 +37,21 @@
         <td class="font-mono text-xs" th:text="${vehicle.vin}">17-digit-vin-here</td>
         <td th:text="${vehicle.year}">2024</td>
         <td>
-          <span th:if="${vehicle.available}" class="badge badge-success badge-sm">Available</span>
-          <span th:if="not ${vehicle.available}" class="badge badge-neutral badge-sm">Unavailable</span>
+          <span th:if="${vehicle.active}" class="badge badge-success badge-sm">Active</span>
+          <span th:if="${!vehicle.active}" class="badge badge-neutral badge-sm">Inactive</span>
         </td>
         <td>
           <div class="join">
             <a th:href="@{/vehicles/{id}/edit(id=${vehicle.id})}" class="btn btn-xs btn-ghost join-item">Edit</a>
             <form th:action="@{/vehicles/{id}/toggle-availability(id=${vehicle.id})}" method="post" class="inline">
               <button type="submit" class="btn btn-xs btn-ghost join-item">Toggle</button>
+            </form>
+            <form th:action="@{/vehicles/{id}/toggle-luxury(id=${vehicle.id})}" method="post" class="inline">
+              <button type="submit"
+                      class="btn btn-xs"
+                      th:classappend="${vehicle.requiresApproval} ? 'btn-secondary' : 'btn-outline'">
+                <span th:text="${vehicle.requiresApproval ? 'Luxury (Required)' : 'Standard'}"></span>
+              </button>
             </form>
             <form th:action="@{/vehicles/{id}/delete(id=${vehicle.id})}" method="post" class="inline">
               <button type="submit" class="btn btn-xs btn-error btn-ghost join-item" onclick="return confirm('Delete vehicle?')">Delete</button>

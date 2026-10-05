@@ -1,0 +1,38 @@
+stateDiagram-v2
+    [*] --> DRAFT : OP-01: Create Reservation\n[Valid interval & resource exists]
+
+    note right of DRAFT
+        - Intent recorded
+        - Resource NOT locked
+        - Zero impact on OP-02 Availability
+    end note
+
+    DRAFT --> CONFIRMED : OP-03: Confirm Reservation\n[!resource.isLuxury & active & no conflict]
+    DRAFT --> PENDING_APPROVAL : OP-03: Confirm Reservation\n[resource.isLuxury & active]
+
+    note right of PENDING_APPROVAL
+        - Requires Approver authorization
+        - Car not permanently locked
+    end note
+
+    PENDING_APPROVAL --> CONFIRMED : OP-05: Approve Reservation\n[Approver & currentTime < start & no conflict]
+    PENDING_APPROVAL --> REJECTED : OP-06: Reject Reservation\n[Approver rejects request]
+    PENDING_APPROVAL --> EXPIRED : System timeout\n[currentTime >= start without decision]
+
+    note right of CONFIRMED
+        - Binding allocation locked
+        - Blocks availability under BR-02
+    end note
+
+    DRAFT --> CANCELLED : OP-04: Cancel Reservation\n[currentTime < start]
+    PENDING_APPROVAL --> CANCELLED : OP-04: Cancel Reservation\n[currentTime < start]
+    CONFIRMED --> CANCELLED : OP-04: Cancel Reservation\n[currentTime < start]
+
+    note right of CANCELLED
+        - Allocation released
+        - Terminal state
+    end note
+
+    CANCELLED --> [*]
+    REJECTED --> [*]
+    EXPIRED --> [*]
