@@ -12,16 +12,16 @@
 
 - **Runtime:** Java 21 (LTS)
 - **Framework:** Spring Boot 3.x
-  - `spring-boot-starter-web` (Spring MVC controllers & view resolution)
-  - `spring-boot-starter-thymeleaf` (Server-side rendered HTML UI)
-  - `spring-boot-starter-data-jpa` (Hibernate ORM & automated repositories)
-  - `spring-boot-starter-validation` (Jakarta Bean Validation)
-  - `postgresql` runtime driver
+    - `spring-boot-starter-web` (Spring MVC controllers & view resolution)
+    - `spring-boot-starter-thymeleaf` (Server-side rendered HTML UI)
+    - `spring-boot-starter-data-jpa` (Hibernate ORM & automated repositories)
+    - `spring-boot-starter-validation` (Jakarta Bean Validation)
+    - `postgresql` runtime driver
 - **Frontend UI & Styling:**
-  - **Template Engine:** Thymeleaf
-  - **CSS Framework:** Tailwind CSS (via CDN)
-  - **Component Library:** DaisyUI (via CDN, semantic utility classes `btn`, `table`, `card`, `alert`, `badge`)
-  - **Theme Preset:** DaisyUI built-in theme (e.g., `dim` or `nord` declared via `data-theme`)
+    - **Template Engine:** Thymeleaf
+    - **CSS Framework:** Tailwind CSS (via CDN)
+    - **Component Library:** DaisyUI (via CDN, semantic utility classes `btn`, `table`, `card`, `alert`, `badge`)
+    - **Theme Preset:** DaisyUI built-in theme (e.g., `dim` or `nord` declared via `data-theme`)
 - **Database:** PostgreSQL 16 (executed via Docker Compose)
 - **Database Management:** pgAdmin 4 (executed via Docker Compose)
 - **Testing:** JUnit 5 + Spring Boot Starter Test
@@ -34,10 +34,10 @@
 ## CP1 Walking Skeleton
 
 - **POST `/reservations`**
-  - Validate input & constraints (advance window $\ge$ 2 hours, max duration $\le$ 14 days, no overlapping bookings for the vehicle).
-  - Persist reservation to PostgreSQL (`state = CONFIRMED`).
-  - Redirect to `/reservations` with a flash success message showing the reservation ID (HTTP 302/303).
-  - Automated check: `ReservationPersistenceSpikeTest` executes via `@SpringBootTest` asserting saved entities, relational mapping, and timestamp integrity.
+    - Validate input & constraints (advance window $\ge$ 2 hours, max duration $\le$ 14 days, no overlapping bookings for the vehicle).
+    - Persist reservation to PostgreSQL (`state = CONFIRMED`).
+    - Redirect to `/reservations` with a flash success message showing the reservation ID (HTTP 302/303).
+    - Automated check: `ReservationPersistenceSpikeTest` executes via `@SpringBootTest` asserting saved entities, relational mapping, and timestamp integrity.
 
 ---
 
@@ -125,14 +125,9 @@ docker compose down -v
 ```
 
 
-<<<<<<< Updated upstream
-# Definition of Done — Before C03
-
-=======
 
 # Definition of Done — Before C03
 
->>>>>>> Stashed changes
 > **Note:** Teacher recommended plantUML for diagrams, i feel like mermaid code directly in our codebase would be better (example in docs/architecture/erd.mmd)
 
 - [x] All four core operations have complete textual specification slices
