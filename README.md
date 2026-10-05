@@ -12,16 +12,16 @@
 
 - **Runtime:** Java 21 (LTS)
 - **Framework:** Spring Boot 3.x
-   - `spring-boot-starter-web` (Spring MVC controllers & view resolution)
-   - `spring-boot-starter-thymeleaf` (Server-side rendered HTML UI)
-   - `spring-boot-starter-data-jpa` (Hibernate ORM & automated repositories)
-   - `spring-boot-starter-validation` (Jakarta Bean Validation)
-   - `postgresql` runtime driver
+  - `spring-boot-starter-web` (Spring MVC controllers & view resolution)
+  - `spring-boot-starter-thymeleaf` (Server-side rendered HTML UI)
+  - `spring-boot-starter-data-jpa` (Hibernate ORM & automated repositories)
+  - `spring-boot-starter-validation` (Jakarta Bean Validation)
+  - `postgresql` runtime driver
 - **Frontend UI & Styling:**
-   - **Template Engine:** Thymeleaf
-   - **CSS Framework:** Tailwind CSS (via CDN)
-   - **Component Library:** DaisyUI (via CDN, semantic utility classes `btn`, `table`, `card`, `alert`, `badge`)
-   - **Theme Preset:** DaisyUI built-in theme (e.g., `dim` or `nord` declared via `data-theme`)
+  - **Template Engine:** Thymeleaf
+  - **CSS Framework:** Tailwind CSS (via CDN)
+  - **Component Library:** DaisyUI (via CDN, semantic utility classes `btn`, `table`, `card`, `alert`, `badge`)
+  - **Theme Preset:** DaisyUI built-in theme (e.g., `dim` or `nord` declared via `data-theme`)
 - **Database:** PostgreSQL 16 (executed via Docker Compose)
 - **Database Management:** pgAdmin 4 (executed via Docker Compose)
 - **Testing:** JUnit 5 + Spring Boot Starter Test
@@ -34,70 +34,105 @@
 ## CP1 Walking Skeleton
 
 - **POST `/reservations`**
-   - Validate input & constraints (advance window $\ge$ 2 hours, max duration $\le$ 14 days, no overlapping bookings for the vehicle).
-   - Persist reservation to PostgreSQL (`state = CONFIRMED`).
-   - Redirect to `/reservations` with a flash success message showing the reservation ID (HTTP 302/303).
-   - Automated check: `ReservationPersistenceSpikeTest` executes via `@SpringBootTest` asserting saved entities, relational mapping, and timestamp integrity.
+  - Validate input & constraints (advance window $\ge$ 2 hours, max duration $\le$ 14 days, no overlapping bookings for the vehicle).
+  - Persist reservation to PostgreSQL (`state = CONFIRMED`).
+  - Redirect to `/reservations` with a flash success message showing the reservation ID (HTTP 302/303).
+  - Automated check: `ReservationPersistenceSpikeTest` executes via `@SpringBootTest` asserting saved entities, relational mapping, and timestamp integrity.
 
 ---
 
 
 # Quick Start
 
-### Prerequisites 
+Choose between running the application locally with your own Java SDK or running the entire environment inside Docker containers.
 
-- **Java 21**
-- **Docker** 
-
-> **Tip:** Open the terminal in IntelliJ with `Alt + F12`.
+> **Tip:** Open the integrated terminal in IntelliJ with `Alt + F12`.
 
 ---
 
-## 1. Start Database & Tools
+## Shared Access & Credentials
 
-```bash
-docker compose up -d
-```
-
-* **App DB:** `localhost:5432` (`autorepodb`)
-* **pgAdmin:** [http://localhost:5050](http://localhost:5050)
-  * **pgAdmin Login:**
-    * **Email:** `admin@autorepo.com`
-    * **Password:** `admin`
-  * **PostgreSQL Connection (inside pgAdmin):**
-    * **Username:** `postgres`
-    * **Password:** `mysecretpassword`
-
-## 2. Run the Reservation Spike Test
-
-```bash
-./mvnw test -Dtest=ReservationPersistenceSpikeTest
-```
+| Service | Address | Credentials |
+| :--- | :--- | :--- |
+| **Web App** | [http://localhost:8080/vehicles](http://localhost:8080/vehicles) | — |
+| **pgAdmin 4** | [http://localhost:5050](http://localhost:5050) | `admin@autorepo.com` / `admin` |
+| **PostgreSQL** | `localhost:5432` (`autorepodb`) | `postgres` / `mysecretpassword` |
 
 ---
 
-## 3. Run the Application
+## Option 1: Local Development
 
-```bash
-./mvnw spring-boot:run
-```
+Best for active coding with IDE integration, instant reloading, and debugging.
 
-> **Note:** Run via `./mvnw spring-boot:run` at least on the first startup so the database initializes with default seed data.
+**Prerequisites:** Java 21, Docker
 
-Access the application at: [http://localhost:8080/vehicles](http://localhost:8080/vehicles)
+1. **Start database and tools:**
+
+   ```bash
+   docker compose up -d postgres pgadmin
+   ```
+
+2. **(Optional) Run persistence test:**
+
+   ```bash
+   ./mvnw test -Dtest=ReservationPersistenceSpikeTest
+   ```
+
+3. **Start the application:**
+
+   ```bash
+   ./mvnw spring-boot:run
+   ```
+
+   *The `local` profile seeds sample users, vehicles, and reservations automatically on boot.*
 
 ---
 
-## 4. Stop Environment & Reset Data
+## Option 2: Full Docker (Zero Java Setup)
+
+Best for quick onboarding, demos, or teammates without a local Java/Maven toolchain.
+
+**Prerequisites:** Docker & Docker Compose
+
+1. **Build and start the complete stack:**
+
+   ```bash
+   docker compose up -d --build
+   ```
+
+2. **Stream application logs:**
+
+   ```bash
+   docker compose logs -f app
+   ```
+
+   *(Press `Ctrl + C` to stop following logs; containers remain running.)*
+
+3. **Rebuild after making code changes:**
+
+   ```bash
+   docker compose up -d --build app
+   ```
+
+---
+
+## Teardown & Reset
+
+Stop all running containers and erase the database volume to start fresh:
 
 ```bash
 docker compose down -v
 ```
 
----
+
+<<<<<<< Updated upstream
+# Definition of Done — Before C03
+
+=======
 
 # Definition of Done — Before C03
 
+>>>>>>> Stashed changes
 > **Note:** Teacher recommended plantUML for diagrams, i feel like mermaid code directly in our codebase would be better (example in docs/architecture/erd.mmd)
 
 - [x] All four core operations have complete textual specification slices
