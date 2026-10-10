@@ -83,6 +83,42 @@ class ReservationLifecycleIntegrationTest {
     }
 
     @Test
+    void approvingPendingLuxuryReservationSucceedsWithoutSelfConflict() {
+        User user = userRepository.save(User.builder()
+                .fullName("Approver User")
+                .email("approver@example.com")
+                .driverLicenseNumber("AP-101")
+                .build());
+
+        Vehicle vehicle = vehicleRepository.save(Vehicle.builder()
+                .brand("Mercedes")
+                .model("S-Class")
+                .year(2025)
+                .vin("VIN-APP-001")
+                .licensePlate("AP-77888")
+                .isActive(true)
+                .requiresApproval(true)
+                .build());
+
+        LocalDateTime start = LocalDateTime.now().plusDays(2).withHour(9).withMinute(0).withSecond(0).withNano(0);
+        Reservation draft = Reservation.builder()
+                .vehicle(vehicle)
+                .user(user)
+                .startTime(start)
+                .endTime(start.plusHours(3))
+                .state(ReservationState.DRAFT)
+                .createdAt(LocalDateTime.now())
+                .build();
+        reservationRepository.save(draft);
+
+        Reservation pending = reservationService.confirmReservation(draft.getId());
+        assertThat(pending.getState()).isEqualTo(ReservationState.PENDING_APPROVAL);
+
+        Reservation approved = reservationService.approveReservation(pending.getId());
+        assertThat(approved.getState()).isEqualTo(ReservationState.CONFIRMED);
+    }
+
+    @Test
     void stalePendingApprovalExpires() {
         User user = userRepository.save(User.builder()
                 .fullName("Expiring User")

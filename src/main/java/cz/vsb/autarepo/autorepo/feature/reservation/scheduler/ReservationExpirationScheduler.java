@@ -12,7 +12,7 @@ public class ReservationExpirationScheduler {
         this.reservationService = reservationService;
     }
 
-    @Scheduled(fixedRateString = "${autorepo.expiry-interval:10000}")
+    @Scheduled(fixedRateString = "${autorepo.expiry-interval:60000}")
     public void expirePendingReservations() {
         System.out.println(">>> Scheduler fired at: " + java.time.LocalDateTime.now());
         reservationService.expireStaleReservations();

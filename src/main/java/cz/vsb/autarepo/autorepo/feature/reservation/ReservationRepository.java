@@ -40,12 +40,18 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         SELECT COUNT(r) > 0 FROM Reservation r
         WHERE r.vehicle.id = :vehicleId
           AND r.state IN ('CONFIRMED', 'PENDING_APPROVAL')
+          AND (:ignoreReservationId IS NULL OR r.id <> :ignoreReservationId)
           AND r.startTime < :endTime
           AND r.endTime > :startTime
     """)
     boolean hasStateConflict(
             @Param("vehicleId") Long vehicleId,
             @Param("startTime") LocalDateTime startTime,
-            @Param("endTime") LocalDateTime endTime
+            @Param("endTime") LocalDateTime endTime,
+            @Param("ignoreReservationId") Long ignoreReservationId
     );
+
+    default boolean hasStateConflict(Long vehicleId, LocalDateTime startTime, LocalDateTime endTime) {
+        return hasStateConflict(vehicleId, startTime, endTime, null);
+    }
 }

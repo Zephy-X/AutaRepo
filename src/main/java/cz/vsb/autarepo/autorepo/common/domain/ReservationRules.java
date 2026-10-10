@@ -12,6 +12,7 @@ import java.util.Set;
 public class ReservationRules {
     public static final Duration MIN_LEAD_TIME = Duration.ofHours(2);
     public static final Duration MAX_DURATION = Duration.ofDays(14);
+//    public static final Duration REVIEW_SLA = Duration.ofSeconds(15);
     public static final Duration REVIEW_SLA = Duration.ofHours(24);
 
     private static final Set<ReservationState> BLOCKING_STATES = EnumSet.of(

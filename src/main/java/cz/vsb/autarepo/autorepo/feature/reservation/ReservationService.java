@@ -191,10 +191,7 @@ public class ReservationService {
     }
 
     private void ensureNoBlockingConflict(Long vehicleId, LocalDateTime start, LocalDateTime end, Long ignoreReservationId) {
-        if (reservationRepository.hasStateConflict(vehicleId, start, end)) {
-            if (ignoreReservationId != null) {
-                // The repository query only checks for any blocking overlap. This service will reject a conflicting update.
-            }
+        if (reservationRepository.hasStateConflict(vehicleId, start, end, ignoreReservationId)) {
             throw new ConflictOverlapException("Vehicle conflict: another reservation is active for this time slot.");
         }
     }

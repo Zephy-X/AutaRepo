@@ -1,7 +1,11 @@
 package cz.vsb.autarepo.autorepo.feature.reservation;
 
 import cz.vsb.autarepo.autorepo.common.domain.ReservationWindowPolicy;
+import cz.vsb.autarepo.autorepo.common.exception.ApprovalWindowExpiredException;
+import cz.vsb.autarepo.autorepo.common.exception.CancellationWindowClosedException;
+import cz.vsb.autarepo.autorepo.common.exception.ConflictOverlapException;
 import cz.vsb.autarepo.autorepo.common.exception.DomainErrorMessages;
+import cz.vsb.autarepo.autorepo.common.exception.ResourceNotFoundException;
 import cz.vsb.autarepo.autorepo.feature.reservation.dto.ReservationForm;
 import cz.vsb.autarepo.autorepo.feature.user.UserService;
 import cz.vsb.autarepo.autorepo.feature.vehicle.VehicleService;
@@ -138,7 +142,8 @@ public class ReservationViewController {
         try {
             Reservation res = action.apply(id);
             redirect.addFlashAttribute("successMessage", successMsg.apply(res));
-        } catch (IllegalStateException e) {
+        } catch (IllegalStateException | ConflictOverlapException | CancellationWindowClosedException |
+                 ApprovalWindowExpiredException | ResourceNotFoundException e) {
             redirect.addFlashAttribute("errorMessage", DomainErrorMessages.resolve(e.getMessage()));
         }
         return "redirect:/reservations";

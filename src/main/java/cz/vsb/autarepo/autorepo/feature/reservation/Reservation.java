@@ -1,5 +1,6 @@
 package cz.vsb.autarepo.autorepo.feature.reservation;
 
+import cz.vsb.autarepo.autorepo.common.domain.ReservationRules;
 import cz.vsb.autarepo.autorepo.feature.user.User;
 import cz.vsb.autarepo.autorepo.feature.vehicle.Vehicle;
 import jakarta.persistence.*;
@@ -9,6 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.EnumSet;
 import java.util.Set;
@@ -150,9 +152,8 @@ public class Reservation {
     }
 
     private LocalDateTime resolveReviewDeadline(LocalDateTime now) {
-        LocalDateTime slaDeadline = now.plusHours(24);
-        LocalDateTime candidate = slaDeadline.isBefore(startTime) ? slaDeadline : startTime;
-        return candidate;
+        LocalDateTime slaDeadline = now.plus(ReservationRules.REVIEW_SLA);
+        return slaDeadline.isBefore(startTime) ? slaDeadline : startTime;
     }
 
     private void requireState(ReservationState expected) {
