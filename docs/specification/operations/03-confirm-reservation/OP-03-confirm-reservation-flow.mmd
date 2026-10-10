@@ -6,20 +6,31 @@ flowchart TD
     ErrNotFound --> endErr1((End With Error))
 
     FindReservation -- Yes --> CheckState{"Is current state<br>== DRAFT?"}
-    CheckState -- No --> ErrState["Return error:<br>INVALID_STATE_TRANSITION<br>(Already confirmed or cancelled)"]
+    CheckState -- No --> ErrState["Return error:<br>INVALID_STATE_TRANSITION"]
     ErrState --> endErr2((End With Error))
 
     CheckState -- Yes --> CheckCarActive{"Is assigned Car<br>active?"}
     CheckCarActive -- No --> ErrCarInactive["Return error:<br>RESOURCE_INACTIVE"]
     ErrCarInactive --> endErr3((End With Error))
 
-    CheckCarActive -- Yes --> LockCheck["Begin Atomic Conflict Check<br>(Evaluated under BR-02)"]
-    LockCheck --> DetectCollision{"Any conflicting<br>CONFIRMED reservation<br>for this Car?"}
+    CheckCarActive -- Yes --> CheckTime{"Is currentTime < startTime?"}
+    CheckTime -- No --> ErrTime["Return error:<br>START_TIME_PASSED"]
+    ErrTime --> endErr4((End With Error))
 
-    DetectCollision -- Yes / Race lost --> ErrConflict["Return error:<br>CONFLICT_OVERLAP<br>(Reservation remains DRAFT)"]
-    ErrConflict --> endErr4((End With Error))
+    CheckTime -- Yes --> LockCheck["Begin Atomic Conflict Check<br>(Evaluated under BR-02)"]
+    LockCheck --> DetectCollision{"Any overlapping<br>CONFIRMED or PENDING_APPROVAL<br>reservation for this Car?"}
 
-    DetectCollision -- No / Exclusive lock acquired --> UpdateState["Update Reservation:<br>state = CONFIRMED"]
-    UpdateState --> CommitAllocation["Commit exclusive car lock<br>to inventory schedule"]
-    CommitAllocation --> ReturnConfirmed["Return updated record<br>(state: CONFIRMED)"]
-    ReturnConfirmed --> endSuccess((Success))
+    DetectCollision -- Yes / Collision --> ErrConflict["Return error:<br>CONFLICT_OVERLAP<br>(Reservation remains DRAFT)"]
+    ErrConflict --> endErr5((End With Error))
+
+    DetectCollision -- No / Slot Available --> CheckLuxury{"Does vehicle require approval?<br>(resource.requiresApproval)?"}
+
+%% Standard Vehicle Path
+    CheckLuxury -- No --> SetConfirmed["Update Reservation:<br>state = CONFIRMED<br>(Hard allocation committed)"]
+    SetConfirmed --> ReturnConfirmed["Return record (CONFIRMED)"]
+    ReturnConfirmed --> endSuccess1((Success))
+
+%% Luxury Vehicle Path
+    CheckLuxury -- Yes --> SetPending["Compute reviewDeadline<br>Update Reservation:<br>state = PENDING_APPROVAL<br>(Exclusive soft-lock committed)"]
+    SetPending --> ReturnPending["Return record (PENDING_APPROVAL)"]
+    ReturnPending --> endSuccess2((Success))

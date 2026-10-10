@@ -19,6 +19,7 @@ public class Vehicle {
 
     private String brand;
     private String model;
+    @Column(name = "model_year")
     private int year;
     private String vin;
     private String licensePlate;

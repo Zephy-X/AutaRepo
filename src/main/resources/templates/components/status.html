@@ -1,0 +1,7 @@
+<span th:fragment="reservationState(state)" xmlns:th="http://www.thymeleaf.org"
+      class="badge badge-sm"
+      th:classappend="${state.name() == 'CONFIRMED'} ? 'badge-success' :
+                      (${state.name() == 'CANCELLED'} ? 'badge-error' :
+                      (${state.name() == 'PENDING_APPROVAL'} ? 'badge-info' :
+                      (${state.name() == 'DRAFT'} ? 'badge-warning' : 'badge-neutral')))"
+      th:text="${state.name().replace('_', ' ')}">STATE</span>

@@ -1,0 +1,18 @@
+flowchart TD
+    startNode((Start: Scheduled Sweep / Trigger)) --> QueryPending["Query all reservations with<br>state == PENDING_APPROVAL"]
+    QueryPending --> EvaluateList{"Any pending reservations<br>found?"}
+
+    EvaluateList -- No --> EndNoop((End: No Action))
+
+    EvaluateList -- Yes --> Iterate["Evaluate each record:"]
+    Iterate --> CheckDeadline{"Is currentTime >= reviewDeadline<br>OR currentTime >= startTime?"}
+
+    CheckDeadline -- No --> SkipRecord["Keep PENDING_APPROVAL<br>(Within review SLA)"]
+    SkipRecord --> NextRecord{"More records?"}
+
+    CheckDeadline -- Yes --> ExpireRecord["Set state = EXPIRED<br>- Dissolve exclusive soft-lock<br>- Car becomes AVAILABLE for interval"]
+    ExpireRecord --> NotifyUser["Dispatch Expiration Notification to User"]
+    NotifyUser --> NextRecord
+
+    NextRecord -- Yes --> Iterate
+    NextRecord -- No --> EndSweep((End: Sweep Completed))

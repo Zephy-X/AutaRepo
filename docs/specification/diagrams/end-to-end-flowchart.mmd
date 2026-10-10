@@ -1,0 +1,59 @@
+flowchart TD
+    startNode((Start)) --> Step1["Step 1: Browse cars & enter time window"]
+
+%% OP-02 Check Availability
+    Step1 --> OP02["OP-02: Check Availability"]
+    OP02 --> CheckAvail{"Is Car Available in [start, end)?"}
+    CheckAvail -- No --> PickAnother["Select another car or interval"]
+    PickAnother --> OP02
+    CheckAvail -- Yes --> Step2["Step 2: Put in basket / Fill details"]
+
+%% OP-01 Create Reservation
+    Step2 --> OP01["OP-01: Create Reservation"]
+    OP01 --> CreateDraft["System creates Reservation in DRAFT state<br>- Intent recorded<br>- Car NOT yet locked"]
+
+%% Decision to proceed
+    CreateDraft --> DecideConfirm{"User proceeds with reservation?"}
+    DecideConfirm -- Abandon / Cancel --> CancelDraft["OP-04: Cancel Reservation<br>State: CANCELLED"]
+    CancelDraft --> EndDraftCancel((End))
+
+%% OP-03 Confirm Reservation routing
+    DecideConfirm -- Submit Reservation --> OP03["OP-03: Confirm Reservation"]
+    OP03 --> PreCheckConflict{"Conflict check:<br>Overlapping CONFIRMED or PENDING bookings?"}
+
+    PreCheckConflict -- Yes / Collision --> RejectConfirm["Booking Rejected (Slot taken)<br>Remains DRAFT"]
+    RejectConfirm --> Step1
+
+    PreCheckConflict -- No --> IsLuxury{"Is Resource a Luxury Car?"}
+
+%% Standard Vehicle Branch
+    IsLuxury -- No --> CommitConfirm["System commits hard allocation<br>State: CONFIRMED<br>Car is permanently locked!"]
+
+%% Luxury Vehicle Branch (Pending Approval with Soft-Lock)
+    IsLuxury -- Yes --> SetPending["State: PENDING_APPROVAL<br>- Car soft-locked exclusively<br>- Placed in Approver Queue"]
+    SetPending --> ApproverAction{"Approver Decision?"}
+
+%% Expiration via OP-07 (System Scheduler)
+    ApproverAction -- "Timeout: now >= reviewDeadline OR now >= start" --> OP07["OP-07: Expire Pending Reservation<br>State: EXPIRED<br>Soft-lock released"]
+    OP07 --> EndExpired((End))
+
+%% Rejection via OP-06
+    ApproverAction -- Reject --> StateRejected["OP-06: Reject Reservation<br>State: REJECTED<br>Soft-lock released"]
+    StateRejected --> EndRejected((End))
+
+%% User Cancellation via OP-04
+    ApproverAction -- "Cancel by User (now < start)" --> CancelPending["OP-04: Cancel Reservation<br>State: CANCELLED<br>Soft-lock released"]
+    CancelPending --> EndPendingCancel((End))
+
+%% Approver Approval via OP-05
+    ApproverAction -- Approve --> OP05["OP-05: Approve Reservation<br>State: CONFIRMED<br>Soft-lock converts to Hard allocation!"]
+    OP05 --> HasPlanChanged
+
+%% Post-confirmation / Cancel
+    CommitConfirm --> HasPlanChanged{"Change of plans before start time?"}
+    HasPlanChanged -- No --> UseCar["User picks up car at start time"]
+    UseCar --> EndCompleted((Trip Finished))
+
+    HasPlanChanged -- "Yes: currentTime < start" --> OP04Confirmed["OP-04: Cancel Reservation"]
+    OP04Confirmed --> ReleaseLock["State: CANCELLED<br>Car released back to inventory"]
+    ReleaseLock --> EndCancelled((End))

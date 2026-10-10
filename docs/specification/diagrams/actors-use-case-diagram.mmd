@@ -1,26 +1,36 @@
 flowchart LR
-    User(("User<br>(Client)"))
     Approver(("Approver<br>(Fleet Manager)"))
+    User(("User<br>(Client)"))
+    System(("System<br>(Scheduler / Worker)"))
 
-    subgraph SystemBoundary ["Reservation System (Baseline v0.2)"]
+%% Actor Generalization / Inheritance
+    Approver -- "<<inherits>>" --> User
+
+    subgraph SystemBoundary ["Reservation System (v0.3)"]
         direction TB
-        UC1(["UC-01: Create Reservation<br>(Put car draft in basket)"])
         UC2(["UC-02: Check Availability<br>(Browse cars & intervals)"])
-        UC3(["UC-03: Confirm Reservation<br>(Finalize booking / request approval)"])
-        UC4(["UC-04: Cancel Reservation<br>(Release draft, pending, or confirmed car)"])
-        UC5(["UC-05: Approve Reservation<br>(Authorize restricted luxury booking)"])
-        UC6(["UC-06: Reject Reservation<br>(Decline pending luxury booking)"])
+        UC1(["UC-01: Create Reservation<br>(Draft car in basket)"])
+        UC3(["UC-03: Confirm Reservation<br>(Direct lock OR submit luxury for approval)"])
+        UC4(["UC-04: Cancel Reservation<br>(Release draft, pending, or confirmed slot)"])
+        UC5(["UC-05: Approve Reservation<br>(Commit hard allocation for luxury car)"])
+        UC6(["UC-06: Reject Reservation<br>(Decline pending luxury request)"])
+        UC7(["UC-07: Expire Pending Reservation<br>(Auto-release on timeout or start time)"])
     end
 
+%% User Base Interactions (Approver inherits all of these)
     User --> UC2
     User --> UC1
     User --> UC3
     User --> UC4
 
+%% Approver-Specific Interactions
     Approver --> UC5
     Approver --> UC6
-    Approver --> UC2
 
+%% System Automations
+    System --> UC7
+
+%% Styling
     style SystemBoundary fill:#f9f9f9,stroke:#333,stroke-width:2px
     style UC1 fill:#e1f5fe,stroke:#0288d1,stroke-width:1.5px
     style UC2 fill:#e1f5fe,stroke:#0288d1,stroke-width:1.5px
@@ -28,3 +38,4 @@ flowchart LR
     style UC4 fill:#ffebee,stroke:#c62828,stroke-width:1.5px
     style UC5 fill:#fff3e0,stroke:#ef6c00,stroke-width:1.5px
     style UC6 fill:#fbe9e7,stroke:#d84315,stroke-width:1.5px
+    style UC7 fill:#eceff1,stroke:#546e7a,stroke-width:1.5px

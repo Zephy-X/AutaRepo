@@ -15,55 +15,11 @@
       <form th:action="${vehicleId} ? @{/vehicles/{id}(id=${vehicleId})} : @{/vehicles}"
             th:object="${vehicleForm}" method="post" class="space-y-4">
 
-        <div class="form-control w-full">
-          <label class="label"><span class="label-text font-medium">Brand</span></label>
-          <input type="text" class="input input-bordered w-full focus:input-primary"
-                 th:field="*{brand}" placeholder="e.g., Toyota"
-                 th:classappend="${#fields.hasErrors('brand')} ? 'input-error' : ''" />
-          <label class="label" th:if="${#fields.hasErrors('brand')}">
-            <span class="label-text-alt text-error text-xs" th:errors="*{brand}">Validation error</span>
-          </label>
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label"><span class="label-text font-medium">Model</span></label>
-          <input type="text" class="input input-bordered w-full focus:input-primary"
-                 th:field="*{model}" placeholder="e.g., Corolla"
-                 th:classappend="${#fields.hasErrors('model')} ? 'input-error' : ''" />
-          <label class="label" th:if="${#fields.hasErrors('model')}">
-            <span class="label-text-alt text-error text-xs" th:errors="*{model}">Validation error</span>
-          </label>
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label"><span class="label-text font-medium">Year</span></label>
-          <input type="number" class="input input-bordered w-full focus:input-primary"
-                 th:field="*{year}" placeholder="e.g., 2024"
-                 th:classappend="${#fields.hasErrors('year')} ? 'input-error' : ''" />
-          <label class="label" th:if="${#fields.hasErrors('year')}">
-            <span class="label-text-alt text-error text-xs" th:errors="*{year}">Validation error</span>
-          </label>
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label"><span class="label-text font-medium">License Plate</span></label>
-          <input type="text" class="input input-bordered w-full focus:input-primary font-mono"
-                 th:field="*{licensePlate}" placeholder="e.g., ABC-1234"
-                 th:classappend="${#fields.hasErrors('licensePlate')} ? 'input-error' : ''" />
-          <label class="label" th:if="${#fields.hasErrors('licensePlate')}">
-            <span class="label-text-alt text-error text-xs" th:errors="*{licensePlate}">Validation error</span>
-          </label>
-        </div>
-
-        <div class="form-control w-full">
-          <label class="label"><span class="label-text font-medium">VIN (17 characters)</span></label>
-          <input type="text" class="input input-bordered w-full focus:input-primary font-mono text-sm"
-                 th:field="*{vin}" placeholder="17-character VIN"
-                 th:classappend="${#fields.hasErrors('vin')} ? 'input-error' : ''" />
-          <label class="label" th:if="${#fields.hasErrors('vin')}">
-            <span class="label-text-alt text-error text-xs" th:errors="*{vin}">Validation error</span>
-          </label>
-        </div>
+        <div th:replace="~{components/forms :: input('Brand', 'brand', 'e.g., Toyota', 'text')}"></div>
+        <div th:replace="~{components/forms :: input('Model', 'model', 'e.g., Corolla', 'text')}"></div>
+        <div th:replace="~{components/forms :: input('Year', 'year', 'e.g., 2024', 'number')}"></div>
+        <div th:replace="~{components/forms :: input('License Plate', 'licensePlate', 'e.g., ABC-1234', 'text')}"></div>
+        <div th:replace="~{components/forms :: input('VIN (17 characters)', 'vin', '17-character VIN', 'text')}"></div>
 
         <div class="card-actions justify-end mt-6 gap-2">
           <a href="/vehicles" class="btn btn-ghost">Cancel</a>
