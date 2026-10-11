@@ -36,6 +36,10 @@ public class ReservationViewController {
 
     @ModelAttribute
     public void populateSharedModel(Model model) {
+        populateReservationModel(model);
+    }
+
+    private void populateReservationModel(Model model) {
         model.addAttribute("vehicles", vehicleService.findAll());
         model.addAttribute("users", userService.findAll());
         model.addAttribute("reservations", reservationService.findAll());
@@ -78,7 +82,9 @@ public class ReservationViewController {
             Reservation reservation = reservationService.createReservation(form);
             String message = "Draft created (Reservation #" + reservation.getId() + "). Note: Vehicle is not locked yet!";
             if (isHtmx) {
+                model.addAttribute("reservationForm", defaultForm());
                 model.addAttribute("successMessage", message);
+                populateReservationModel(model);
                 return FRAGMENT_SECTION;
             }
             redirect.addFlashAttribute("successMessage", message);

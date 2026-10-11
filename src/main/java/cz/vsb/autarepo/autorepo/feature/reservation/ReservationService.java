@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.springframework.data.domain.Sort;
+
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,15 +33,17 @@ public class ReservationService {
     private final Clock clock;
 
     public List<Reservation> findAll() {
-        return reservationRepository.findAll();
+        return reservationRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     public List<Reservation> findDrafts() {
-        return reservationRepository.findByState(ReservationState.DRAFT);
+        return reservationRepository.findByState(ReservationState.DRAFT,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     public List<Reservation> findPendingApprovals() {
-        return reservationRepository.findByState(ReservationState.PENDING_APPROVAL);
+        return reservationRepository.findByState(ReservationState.PENDING_APPROVAL,
+                Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
     public Reservation findById(Long id) {
