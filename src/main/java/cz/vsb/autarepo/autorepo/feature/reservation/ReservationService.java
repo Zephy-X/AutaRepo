@@ -1,7 +1,6 @@
 package cz.vsb.autarepo.autorepo.feature.reservation;
 
 import cz.vsb.autarepo.autorepo.common.domain.ReservationRules;
-import cz.vsb.autarepo.autorepo.common.domain.ReservationWindowPolicy;
 import cz.vsb.autarepo.autorepo.common.exception.ApprovalWindowExpiredException;
 import cz.vsb.autarepo.autorepo.common.exception.CancellationWindowClosedException;
 import cz.vsb.autarepo.autorepo.common.exception.ConflictOverlapException;
@@ -16,9 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -30,7 +27,6 @@ public class ReservationService {
     private final VehicleService vehicleService;
     private final UserService userService;
     private final NotificationServiceStub notificationService;
-    private final ReservationWindowPolicy windowPolicy;
     private final ReservationRules reservationRules;
     private final Clock clock;
 
@@ -56,7 +52,7 @@ public class ReservationService {
         LocalDateTime now = now();
         LocalDateTime start = form.toStartDateTime();
         LocalDateTime end = form.toEndDateTime();
-        windowPolicy.validate(start, end, now);
+        reservationRules.validateReservationWindow(start, end, now);
 
         Vehicle vehicle = vehicleService.findById(form.vehicleId());
         User user = userService.findById(form.userId());
@@ -181,7 +177,7 @@ public class ReservationService {
     }
 
     public boolean isAvailable(Long vehicleId, LocalDateTime start, LocalDateTime end) {
-        windowPolicy.validate(start, end, now());
+        reservationRules.validateReservationWindow(start, end, now());
         vehicleService.findById(vehicleId);
         return !reservationRepository.hasStateConflict(vehicleId, start, end);
     }
@@ -197,12 +193,12 @@ public class ReservationService {
     }
 
     private boolean shouldExpireReservation(Reservation reservation, LocalDateTime now) {
-        Instant reviewDeadline = reservation.getReviewDeadline() == null
-                ? null
-                : reservation.getReviewDeadline().toInstant(ZoneOffset.UTC);
-        Instant startInstant = reservation.getStartTime().toInstant(ZoneOffset.UTC);
-        Instant nowInstant = now.toInstant(ZoneOffset.UTC);
-        return reservationRules.shouldExpire(reservation.getState(), nowInstant, reviewDeadline, startInstant);
+        return reservationRules.shouldExpire(
+                reservation.getState(),
+                now,
+                reservation.getReviewDeadline(),
+                reservation.getStartTime()
+        );
     }
 
     private LocalDateTime now() {

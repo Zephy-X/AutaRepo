@@ -1,9 +1,9 @@
 package cz.vsb.autarepo.autorepo.common.domain;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
-public record Interval(Instant start, Instant end) {
+public record Interval(LocalDateTime start, LocalDateTime end) {
     public Interval {
         Objects.requireNonNull(start, "start");
         Objects.requireNonNull(end, "end");
@@ -17,7 +17,7 @@ public record Interval(Instant start, Instant end) {
         return this.start.isBefore(other.end) && other.start.isBefore(this.end);
     }
 
-    public boolean contains(Instant instant) {
+    public boolean contains(LocalDateTime instant) {
         Objects.requireNonNull(instant, "instant");
         return !instant.isBefore(start) && instant.isBefore(end);
     }

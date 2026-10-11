@@ -10,10 +10,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.EnumSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "reservations", indexes = {
@@ -26,9 +23,6 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 public class Reservation {
-    private static final Set<ReservationState> CANCELLABLE_STATES =
-            EnumSet.of(ReservationState.DRAFT, ReservationState.PENDING_APPROVAL, ReservationState.CONFIRMED);
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -128,32 +122,25 @@ public class Reservation {
         if (state == ReservationState.CANCELLED) {
             throw new IllegalStateException("ALREADY_CANCELLED");
         }
-        if (!CANCELLABLE_STATES.contains(state)) {
+        if (!ReservationRules.canCancel(state, now, this.startTime)) {
+            if (!now.isBefore(this.startTime)) {
+                throw new IllegalStateException("CANCELLATION_WINDOW_CLOSED");
+            }
             throw new IllegalStateException("INVALID_STATE_TRANSITION");
-        }
-        if (!now.isBefore(this.startTime)) {
-            throw new IllegalStateException("CANCELLATION_WINDOW_CLOSED");
         }
         this.state = ReservationState.CANCELLED;
     }
 
     public boolean isBlocking() {
-        return state == ReservationState.CONFIRMED || state == ReservationState.PENDING_APPROVAL;
+        return ReservationRules.isBlocking(state);
     }
 
     public boolean isCancellable(LocalDateTime now) {
-        if (state == ReservationState.CANCELLED) {
-            return false;
-        }
-        if (!CANCELLABLE_STATES.contains(state)) {
-            return false;
-        }
-        return now.isBefore(this.startTime);
+        return ReservationRules.canCancel(state, now, this.startTime);
     }
 
     private LocalDateTime resolveReviewDeadline(LocalDateTime now) {
-        LocalDateTime slaDeadline = now.plus(ReservationRules.REVIEW_SLA);
-        return slaDeadline.isBefore(startTime) ? slaDeadline : startTime;
+        return ReservationRules.calculateReviewDeadline(now, startTime);
     }
 
     private void requireState(ReservationState expected) {

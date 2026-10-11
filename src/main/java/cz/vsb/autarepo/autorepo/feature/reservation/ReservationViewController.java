@@ -1,6 +1,5 @@
 package cz.vsb.autarepo.autorepo.feature.reservation;
 
-import cz.vsb.autarepo.autorepo.common.domain.ReservationWindowPolicy;
 import cz.vsb.autarepo.autorepo.common.exception.ApprovalWindowExpiredException;
 import cz.vsb.autarepo.autorepo.common.exception.CancellationWindowClosedException;
 import cz.vsb.autarepo.autorepo.common.exception.ConflictOverlapException;
@@ -33,7 +32,6 @@ public class ReservationViewController {
     private final ReservationService reservationService;
     private final VehicleService vehicleService;
     private final UserService userService;
-    private final ReservationWindowPolicy windowPolicy;
     private final Clock clock;
 
     @ModelAttribute
@@ -72,8 +70,6 @@ public class ReservationViewController {
                                     @RequestHeader(value = "HX-Request", required = false) boolean isHtmx,
                                     Model model,
                                     RedirectAttributes redirect) {
-        validateReservationDates(form, result);
-
         if (result.hasErrors()) {
             return isHtmx ? FRAGMENT_SECTION : VIEW;
         }
@@ -98,10 +94,17 @@ public class ReservationViewController {
                                     BindingResult result,
                                     @RequestHeader(value = "HX-Request", required = false) boolean isHtmx,
                                     Model model) {
-        validateReservationDates(form, result);
-
-        String status = result.hasErrors() ? "INVALID"
-                : reservationService.checkAvailabilityStatus(form.vehicleId(), form.toStartDateTime(), form.toEndDateTime());
+        String status;
+        if (result.hasErrors()) {
+            status = "INVALID";
+        } else {
+            try {
+                status = reservationService.checkAvailabilityStatus(form.vehicleId(), form.toStartDateTime(), form.toEndDateTime());
+            } catch (IllegalArgumentException e) {
+                result.rejectValue("startDate", "reservation.window.invalid", DomainErrorMessages.resolve(e.getMessage()));
+                status = "INVALID";
+            }
+        }
 
         model.addAttribute("availabilityStatus", status);
         return isHtmx ? FRAGMENT_AVAILABILITY : VIEW;
@@ -147,18 +150,6 @@ public class ReservationViewController {
             redirect.addFlashAttribute("errorMessage", DomainErrorMessages.resolve(e.getMessage()));
         }
         return "redirect:/reservations";
-    }
-
-    private void validateReservationDates(ReservationForm form, BindingResult result) {
-        LocalDateTime start = form.toStartDateTime();
-        LocalDateTime end = form.toEndDateTime();
-        if (start != null && end != null) {
-            try {
-                windowPolicy.validate(start, end, now());
-            } catch (IllegalArgumentException e) {
-                result.rejectValue("startDate", "reservation.window.invalid", DomainErrorMessages.resolve(e.getMessage()));
-            }
-        }
     }
 
     private ReservationForm defaultForm() {
