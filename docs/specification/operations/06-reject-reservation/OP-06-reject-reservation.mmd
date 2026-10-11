@@ -1,0 +1,22 @@
+flowchart TD
+    startNode((Start: Approver clicks Reject)) --> Retrieve["Retrieve Reservation by ID"]
+    Retrieve --> CheckExists{"Reservation<br>exists?"}
+    CheckExists -- No --> ErrNotFound["Reject: RESERVATION_NOT_FOUND"]
+    ErrNotFound --> endErr1((End With Error))
+
+    CheckExists -- Yes --> CheckRole{"User has Approver Role?"}
+    CheckRole -- No --> ErrAccess["Reject: ACCESS_DENIED"]
+    ErrAccess --> endErr2((End With Error))
+
+    CheckRole -- Yes --> CheckState{"State == PENDING_APPROVAL?"}
+    CheckState -- No --> ErrState["Reject: INVALID_STATE_TRANSITION"]
+    ErrState --> endErr3((End With Error))
+
+    CheckState -- Yes --> CheckTime{"currentTime < startTime?"}
+    CheckTime -- No --> ErrWindow["Reject: REJECTION_WINDOW_CLOSED"]
+    ErrWindow --> endErr4((End With Error))
+
+    CheckTime -- Yes --> SetReject["Set state = REJECTED<br>- Record approver_id & rejectionReason<br>- Release soft-lock immediately"]
+    SetReject --> Notify["Dispatch Rejection Notification to User"]
+    Notify --> ReturnSuccess["Return record (REJECTED)"]
+    ReturnSuccess --> endSuccess((Success))

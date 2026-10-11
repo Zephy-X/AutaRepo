@@ -1,0 +1,33 @@
+flowchart TD
+    subgraph APP["Application Code Boundary"]
+        API["Reservation API<br/>ReservationViewController<br/><i>Role: Accepts confirm command and handles redirects</i>"]
+
+        LOGIC["Reservation Logic<br/>ReservationService<br/><i>Role: Orchestrates state checks, policy routing, decisions</i>"]
+
+        ENTITY["Domain Entity<br/>Reservation<br/><i>Role: Executes state change DRAFT to CONFIRMED / PENDING</i>"]
+
+        REPO["Reservation Persistence<br/>ReservationRepository<br/><i>Role: Overlap queries and entity persistence</i>"]
+
+        VEH["Vehicle Access and Lock<br/>VehicleService<br/><i>Role: Obtains row lock for vehicle</i>"]
+
+        NOTIF["Notification Integration<br/>NotificationServiceStub<br/><i>Role: Emits completion side effects</i>"]
+    end
+
+    subgraph EXT["External Infrastructure and Persistence"]
+        DB_RES[("PostgreSQL: reservations table")]
+        DB_VEH[("PostgreSQL: vehicles table")]
+        EXT_NOTIF[["Notification Service (Stubbed)"]]
+    end
+
+%% Direct method calls inside application boundary
+    API -->|"1. confirm"| LOGIC
+    LOGIC -->|"2. findByIdForUpdate"| VEH
+    LOGIC -->|"3. hasStateConflict"| REPO
+    LOGIC -->|"4. confirm / requestApproval"| ENTITY
+    LOGIC -->|"5. save and flush"| REPO
+    LOGIC -->|"6. notifyConfirmed"| NOTIF
+
+%% Database and external boundaries
+    REPO -->|"SQL SELECT / UPDATE"| DB_RES
+    VEH -->|"PESSIMISTIC_WRITE lock"| DB_VEH
+    NOTIF -.->|"Log event / API"| EXT_NOTIF

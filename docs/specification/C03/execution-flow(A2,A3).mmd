@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+    actor User as User / Browser
+    participant Ctrl as ReservationViewController
+    participant Svc as ReservationService
+    participant VehSvc as VehicleService
+    participant Repo as ReservationRepository
+    participant Entity as Reservation Entity
+    participant DB as PostgreSQL
+
+    User->>Ctrl: POST /reservations/{id}/confirm
+    Ctrl->>Svc: confirmReservation(id)
+
+    rect rgb(240, 248, 255)
+        note over Svc,VehSvc: Pre-checks & Locking
+        Svc->>Repo: findById(id)
+        Svc->>Svc: Assert state == DRAFT
+        Svc->>VehSvc: findByIdForUpdate(vehicleId)
+        VehSvc->>DB: SELECT ... FOR UPDATE (Lock Vehicle)
+    end
+
+    rect rgb(255, 245, 245)
+        note over Svc,Repo: Rule Check: BR-02 Exclusive Overlap
+        Svc->>Repo: hasStateConflict(CONFIRMED, PENDING_APPROVAL)
+        Repo->>DB: Overlap predicate query
+        alt Conflict Found (Failure Branch)
+            Svc-->>Ctrl: throws ConflictOverlapException
+            Ctrl-->>User: Redirect with error flash message
+        end
+    end
+
+    rect rgb(245, 255, 245)
+        note over Svc,Entity: Branching & State Execution
+        alt vehicle.requiresApproval == true (Spec Mismatch)
+            Svc->>Entity: requestApproval(now)
+            note over Entity: State: PENDING_APPROVAL
+        else standard vehicle
+            Svc->>Entity: confirm(now)
+            note over Entity: State: CONFIRMED
+        end
+    end
+
+    Svc->>Repo: save(reservation) + flush()
+    Repo->>DB: UPDATE reservations SET state = ...
+    Svc->>Ctrl: return outcome
+    Ctrl-->>User: Redirect with success flash message

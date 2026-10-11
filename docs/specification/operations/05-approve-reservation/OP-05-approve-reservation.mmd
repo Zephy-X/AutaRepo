@@ -1,16 +1,25 @@
 flowchart TD
-    A([Start: Approver clicks Approve]) --> B[Retrieve Reservation by ID]
-    B --> C{Reservation exists?}
-    C -- No --> E1[Reject: RESERVATION_NOT_FOUND]
-    C -- Yes --> D{User has Approver Role?}
-    D -- No --> E2[Reject: ACCESS_DENIED]
-    D -- Yes --> E{State == PENDING_APPROVAL?}
-    E -- No --> E3[Reject: INVALID_STATE_TRANSITION]
-    E -- Yes --> F{Target Car is Active?}
-    F -- No --> E4[Reject: RESOURCE_INACTIVE]
-    F -- Yes --> G{currentTime < startTime?}
-    G -- No --> E5[Reject: APPROVAL_WINDOW_EXPIRED<br/>State -> EXPIRED]
-    G -- Yes --> H{Overlap with any CONFIRMED<br/>Reservation on this Car?}
-    H -- Yes --> E6[Reject: CONFLICT_OVERLAP<br/>State remains PENDING_APPROVAL]
-    H -- No --> I[Set State = CONFIRMED<br/>Record Approver ID & Timestamp]
-    I --> J([End: Success, Reservation Confirmed])
+    startNode((Start: Approver clicks Approve)) --> Retrieve["Retrieve Reservation by ID"]
+    Retrieve --> CheckExists{"Reservation<br>exists?"}
+    CheckExists -- No --> ErrNotFound["Reject: RESERVATION_NOT_FOUND"]
+    ErrNotFound --> endErr1((End With Error))
+
+    CheckExists -- Yes --> CheckRole{"User has Approver Role?"}
+    CheckRole -- No --> ErrAccess["Reject: ACCESS_DENIED"]
+    ErrAccess --> endErr2((End With Error))
+
+    CheckRole -- Yes --> CheckState{"State == PENDING_APPROVAL?"}
+    CheckState -- No --> ErrState["Reject: INVALID_STATE_TRANSITION"]
+    ErrState --> endErr3((End With Error))
+
+    CheckState -- Yes --> CheckActive{"Target Car is Active?"}
+    CheckActive -- No --> ErrInactive["Reject: RESOURCE_INACTIVE"]
+    ErrInactive --> endErr4((End With Error))
+
+    CheckActive -- Yes --> CheckTime{"currentTime < startTime?"}
+    CheckTime -- No --> ErrExpired["Reject: APPROVAL_WINDOW_EXPIRED<br>Trigger OP-07 (State -> EXPIRED)"]
+    ErrExpired --> endErr5((End With Error))
+
+    CheckTime -- Yes --> PromoteState["Set state = CONFIRMED<br>- Convert soft-lock to hard allocation<br>- Record approver_id & approvedAt"]
+    PromoteState --> ReturnSuccess["Return record (CONFIRMED)"]
+    ReturnSuccess --> endSuccess((Success))

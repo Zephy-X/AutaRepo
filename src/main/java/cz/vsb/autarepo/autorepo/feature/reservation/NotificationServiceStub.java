@@ -9,15 +9,29 @@ public class NotificationServiceStub {
     private static final Logger logger = LoggerFactory.getLogger(NotificationServiceStub.class);
 
     public void notifyReservationConfirmed(Reservation reservation) {
-        logger.info("NOTIFICATION [STUB]: Reservation {} confirmed for user {} on vehicle {}",
-                reservation.getId(),
-                reservation.getUser().getFullName(),
-                reservation.getVehicle().getVin());
+        notify(reservation, "confirmed");
+    }
+
+    public void notifyReservationPendingApproval(Reservation reservation) {
+        notify(reservation, "pending approval");
+    }
+
+    public void notifyReservationRejected(Reservation reservation) {
+        notify(reservation, "rejected");
     }
 
     public void notifyReservationCancelled(Reservation reservation) {
-        logger.info("NOTIFICATION [STUB]: Reservation {} cancelled for user {} on vehicle {}",
+        notify(reservation, "cancelled");
+    }
+
+    public void notifyReservationExpired(Reservation reservation) {
+        notify(reservation, "expired");
+    }
+
+    private void notify(Reservation reservation, String event) {
+        logger.info("NOTIFICATION [STUB]: Reservation {} {} for user {} on vehicle {}",
                 reservation.getId(),
+                event,
                 reservation.getUser().getFullName(),
                 reservation.getVehicle().getVin());
     }

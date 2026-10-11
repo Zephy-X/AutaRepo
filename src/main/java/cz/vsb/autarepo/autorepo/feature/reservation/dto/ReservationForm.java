@@ -34,16 +34,14 @@ public record ReservationForm(
         Integer endHour
 ) {
     public LocalDateTime toStartDateTime() {
-        if (startDate == null || startHour == null) {
-            return null;
-        }
-        return startDate.atTime(startHour, 0);
+        return toDateTime(startDate, startHour);
     }
 
     public LocalDateTime toEndDateTime() {
-        if (endDate == null || endHour == null) {
-            return null;
-        }
-        return endDate.atTime(endHour, 0);
+        return toDateTime(endDate, endHour);
+    }
+
+    private static LocalDateTime toDateTime(LocalDate date, Integer hour) {
+        return date == null || hour == null ? null : date.atTime(hour, 0);
     }
 }

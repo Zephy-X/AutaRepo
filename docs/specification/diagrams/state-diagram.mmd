@@ -8,19 +8,20 @@ stateDiagram-v2
     end note
 
     DRAFT --> CONFIRMED : OP-03: Confirm Reservation\n[!resource.isLuxury & active & no conflict]
-    DRAFT --> PENDING_APPROVAL : OP-03: Confirm Reservation\n[resource.isLuxury & active]
+    DRAFT --> PENDING_APPROVAL : OP-03: Confirm Reservation\n[resource.isLuxury & active & no conflict]
 
     note right of PENDING_APPROVAL
-        - Requires Approver authorization
-        - Car not permanently locked
+        - Soft-lock placed on slot
+        - Blocks availability under BR-02
+        - Awaiting Approver decision
     end note
 
-    PENDING_APPROVAL --> CONFIRMED : OP-05: Approve Reservation\n[Approver & currentTime < start & no conflict]
+    PENDING_APPROVAL --> CONFIRMED : OP-05: Approve Reservation\n[Approver & currentTime < start]
     PENDING_APPROVAL --> REJECTED : OP-06: Reject Reservation\n[Approver rejects request]
-    PENDING_APPROVAL --> EXPIRED : System timeout\n[currentTime >= start without decision]
+    PENDING_APPROVAL --> EXPIRED : OP-07: Expire Pending Reservation\n[currentTime >= reviewDeadline OR currentTime >= start]
 
     note right of CONFIRMED
-        - Binding allocation locked
+        - Binding hard-allocation locked
         - Blocks availability under BR-02
     end note
 
@@ -29,7 +30,7 @@ stateDiagram-v2
     CONFIRMED --> CANCELLED : OP-04: Cancel Reservation\n[currentTime < start]
 
     note right of CANCELLED
-        - Allocation released
+        - Allocation / hold released
         - Terminal state
     end note
 

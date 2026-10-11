@@ -1,59 +1,49 @@
 # OP-03 — Confirm Reservation
 
-## Goal / User Value
-User finalizes their booking (Step 3: "Complete Booking"), converting a `DRAFT` reservation into an exclusive, legally binding allocation that locks the car against all conflicting bookings.
+### Goal / User Value
+User finalizes their booking by submitting a `DRAFT` reservation. For standard cars, this commits an immediate hard-lock (`CONFIRMED`); for luxury cars requiring approval, this establishes an exclusive soft-lock (`PENDING_APPROVAL`) while awaiting management review.
 
-## Trigger
+### Trigger
 User submits a confirmation request for an existing reservation by its `reservation_id`.
 
-## Observable Requirements
-**REQ-03:**
-The system shall confirm a `DRAFT` Reservation only when the target Resource is active and its interval does not conflict with any existing `CONFIRMED` Reservation on that Resource under `BR-02`.
+### Observable Requirements
+* **REQ-03**: The system shall transition a `DRAFT` Reservation only when the target Resource is active and its interval does not conflict with any existing `CONFIRMED` or `PENDING_APPROVAL` Reservation on that Resource under BR-02.
+* **REQ-04**: If the target Resource has $\text{requiresApproval} == \text{false}$, the Reservation shall transition directly to `CONFIRMED`. If $\text{requiresApproval} == \text{true}$, the Reservation shall transition to `PENDING_APPROVAL` with `reviewDeadline` computed per BR-06.
 
-**REQ-04:**
-For concurrent confirmation attempts that conflict under `BR-02`, at most one Reservation shall transition to `CONFIRMED`; all competing requests shall be rejected.
+### Preconditions
+* Reservation exists.
+* $\text{Reservation.state} == \text{DRAFT}$.
+* Target Resource (Car) is active.
+* Current system time is strictly prior to reservation start ($\text{currentTime} < \text{Reservation.startTime}$).
 
-## Preconditions
-- Reservation exists.
-- `Reservation.state == DRAFT`.
-- Target Resource (Car) is active.
+### Success Postconditions
+* For standard vehicles ($\text{requiresApproval} == \text{false}$): $\text{Reservation.state} = \text{CONFIRMED}$, hard-lock committed.
+* For luxury vehicles ($\text{requiresApproval} == \text{true}$): $\text{Reservation.state} = \text{PENDING\_APPROVAL}$, exclusive soft-lock committed, `reviewDeadline` set, notification dispatched.
+* System invariant BR-02 remains satisfied.
 
-## Success Postcondition
-- `Reservation.state = CONFIRMED`.
-- The Reservation exclusively blocks the car for its interval.
-- System invariant `BR-02` remains satisfied.
+### State Change
+* Standard: `DRAFT` $\rightarrow$ `CONFIRMED`
+* Luxury / Requires Approval: `DRAFT` $\rightarrow$ `PENDING_APPROVAL`
 
-## State Change
-`DRAFT` → `CONFIRMED`
+### Referenced Rules
+* **BR-01**: Interval semantics
+* **BR-02**: Exclusive Resource invariant & blocking states
+* **BR-04**: Draft intent & non-allocation
+* **BR-05**: Luxury vehicle policy & authorization lifecycle
+* **BR-06**: Time-to-live & automatic expiration
 
-## Referenced Rules
-- `BR-01` Interval semantics
-- `BR-02` Exclusive Resource invariant
-- `BR-04` Draft intent & non-allocation
-
-## Main Success Scenario
+### Main Success Scenario
 1. User submits confirmation request with `reservation_id`.
 2. System retrieves Reservation and verifies state is `DRAFT`.
-3. System verifies target car is active.
-4. System executes conflict detection: checks for any overlapping `CONFIRMED` reservations on the same car.
-5. No conflict found: system atomically updates `Reservation.state = CONFIRMED`.
-6. System returns the updated Reservation record with state `CONFIRMED`.
+3. System verifies target car is active and $\text{currentTime} < \text{Reservation.startTime}$.
+4. System executes conflict detection: checks for any overlapping `CONFIRMED` or `PENDING_APPROVAL` reservations on the same car under BR-02.
+5. No conflict found:
+    * **Case A (Standard)**: System atomically transitions $\text{Reservation.state} = \text{CONFIRMED}$.
+    * **Case B (Luxury)**: System computes $\text{reviewDeadline} = \min(\text{currentTime} + \text{SLA}, \text{Reservation.startTime})$ and atomically transitions $\text{Reservation.state} = \text{PENDING\_APPROVAL}$.
+6. System returns the updated Reservation record.
 
-## Alternative / Failure Outcomes
-- **Unknown Reservation:** Reservation ID not found → rejected with `RESERVATION_NOT_FOUND`.
-- **Invalid Source State:** Reservation is already `CONFIRMED` or `CANCELLED` → rejected with `INVALID_STATE_TRANSITION`; state unchanged.
-- **Resource Inactive:** Car is disabled or flagged inactive → rejected with `RESOURCE_INACTIVE`; Reservation remains `DRAFT`.
-- **Interval Collision:** Another user confirmed an overlapping interval first → rejected with `CONFLICT_OVERLAP`; Reservation remains `DRAFT`.
-- **Concurrent Race:** Two users attempt to confirm overlapping drafts at the exact same millisecond → exactly one transitions to `CONFIRMED`, the second is rejected with `CONFLICT_OVERLAP` per `REQ-04`.
-
-## Verification Examples
-- **Positive:** Reservation `res_1` is `DRAFT` for `CAR-01` at `[10:00, 12:00)`, no confirmed bookings exist → transitions to `CONFIRMED`.
-- **Negative (Overlap Collision):** Reservation `res_2` is `DRAFT` for `CAR-01` at `[11:00, 13:00)`. `res_1` is already `CONFIRMED` for `[10:00, 12:00)` → confirmation of `res_2` rejected with `CONFLICT_OVERLAP`; `res_2` remains `DRAFT`.
-- **Negative (Re-confirm):** Confirming `res_1` when it is already `CONFIRMED` → rejected with `INVALID_STATE_TRANSITION`.
-- **Negative (Confirm Cancelled):** Confirming `res_3` when its state is `CANCELLED` → rejected with `INVALID_STATE_TRANSITION`.
-
-## Rationale
-Acts as the single point of truth for exclusivity. Pushing concurrency enforcement to this final commit boundary allows frictionless drafting while mathematically guaranteeing `BR-02`.
-
-## Assumption / Unknown / TBD
-The exact concurrency locking mechanism (database row locks, optimistic versioning, or serializable transactions) is an architectural choice deferred to C03.
+### Alternative / Failure Outcomes
+* **Unknown Reservation**: Reservation ID not found $\rightarrow$ rejected with `RESERVATION_NOT_FOUND`.
+* **Invalid Source State**: Reservation is not in `DRAFT` $\rightarrow$ rejected with `INVALID_STATE_TRANSITION`.
+* **Resource Inactive**: Car is disabled or inactive $\rightarrow$ rejected with `RESOURCE_INACTIVE`; Reservation remains `DRAFT`.
+* **Interval Collision**: Another reservation for the same car is already `CONFIRMED` or `PENDING_APPROVAL` for an overlapping window $\rightarrow$ rejected with `CONFLICT_OVERLAP`; Reservation remains `DRAFT`.

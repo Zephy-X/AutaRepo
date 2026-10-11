@@ -9,8 +9,8 @@ flowchart TD
     CheckSyntax -- No --> ErrSyntax["Return error:<br>INVALID_INTERVAL"]
     ErrSyntax --> endErr2((End With Error))
 
-    CheckSyntax -- Yes --> FetchConfirmed["Query all CONFIRMED reservations<br>for this Car"]
-    FetchConfirmed --> EvalOverlap{"Does any CONFIRMED booking<br>overlap query interval?<br>max(s1,s2) < min(e1,e2)"}
+    CheckSyntax -- Yes --> FetchBlocking["Query all blocking reservations<br>(CONFIRMED or PENDING_APPROVAL)"]
+    FetchBlocking --> EvalOverlap{"Does any blocking reservation<br>overlap query interval?<br>max(s1,s2) < min(e1,e2)"}
 
     EvalOverlap -- Yes --> RetUnavail["Return Result:<br>UNAVAILABLE"]
     EvalOverlap -- No --> RetAvail["Return Result:<br>AVAILABLE"]

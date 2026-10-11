@@ -14,6 +14,13 @@ public class GlobalExceptionHandler {
         return mav;
     }
 
+    @ExceptionHandler({ConflictOverlapException.class, CancellationWindowClosedException.class, ApprovalWindowExpiredException.class})
+    public ModelAndView handleBusinessException(RuntimeException e) {
+        ModelAndView mav = new ModelAndView("error/500");
+        mav.addObject("errorMessage", e.getMessage());
+        return mav;
+    }
+
     @ExceptionHandler(Exception.class)
     public ModelAndView handleGenericException(Exception e) {
         ModelAndView mav = new ModelAndView("error/500");

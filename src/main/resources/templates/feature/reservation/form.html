@@ -45,29 +45,25 @@
         </div>
 
         <div class="form-control w-full">
-          <label class="label"><span class="label-text font-medium">Start Date & Time</span></label>
-          <input type="datetime-local" class="input input-bordered w-full focus:input-primary font-mono tabular-nums"
-                 th:field="*{startTime}"
-                 th:classappend="${#fields.hasErrors('startTime')} ? 'input-error' : ''" />
-          <label class="label" th:if="${#fields.hasErrors('startTime')}">
-            <span class="label-text-alt text-error text-xs" th:errors="*{startTime}">Validation error</span>
-          </label>
-          <label class="label">
-            <span class="label-text-alt text-xs text-base-content/60">Must be at least 2 hours from now</span>
-          </label>
+          <label class="label"><span class="label-text font-medium">Start Date & Hour</span></label>
+          <div class="flex gap-2">
+            <input type="date" class="input input-bordered flex-1" th:field="*{startDate}" />
+            <select class="select select-bordered w-32" th:field="*{startHour}">
+              <option th:each="hour : ${#numbers.sequence(0, 23)}" th:value="${hour}"
+                      th:text="${#numbers.formatInteger(hour, 2) + ':00'}"></option>
+            </select>
+          </div>
         </div>
 
         <div class="form-control w-full">
-          <label class="label"><span class="label-text font-medium">End Date & Time</span></label>
-          <input type="datetime-local" class="input input-bordered w-full focus:input-primary font-mono tabular-nums"
-                 th:field="*{endTime}"
-                 th:classappend="${#fields.hasErrors('endTime')} ? 'input-error' : ''" />
-          <label class="label" th:if="${#fields.hasErrors('endTime')}">
-            <span class="label-text-alt text-error text-xs" th:errors="*{endTime}">Validation error</span>
-          </label>
-          <label class="label">
-            <span class="label-text-alt text-xs text-base-content/60">Maximum duration: 14 days</span>
-          </label>
+          <label class="label"><span class="label-text font-medium">End Date & Hour</span></label>
+          <div class="flex gap-2">
+            <input type="date" class="input input-bordered flex-1" th:field="*{endDate}" />
+            <select class="select select-bordered w-32" th:field="*{endHour}">
+              <option th:each="hour : ${#numbers.sequence(0, 23)}" th:value="${hour}"
+                      th:text="${#numbers.formatInteger(hour, 2) + ':00'}"></option>
+            </select>
+          </div>
         </div>
 
         <div th:if="${errorMessage}" class="alert alert-warning shadow-lg">

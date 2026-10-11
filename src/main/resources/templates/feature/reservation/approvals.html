@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout/base :: layout(~{::title}, ~{::section})}">
+<head>
+    <title>Approval queue</title>
+</head>
+<body>
+<section class="space-y-6">
+    <div class="flex items-center justify-between gap-3">
+        <div>
+            <h1 class="text-2xl font-bold">Approval queue</h1>
+            <p class="text-sm text-base-content/70">Luxury and restricted reservations awaiting review.</p>
+        </div>
+        <a th:href="@{/reservations}" class="btn btn-outline btn-sm">Back to reservations</a>
+    </div>
+
+    <div class="card bg-base-200 border border-base-300 shadow-sm">
+        <div class="card-body">
+            <div class="overflow-x-auto">
+                <table class="table table-zebra w-full">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Vehicle</th>
+                        <th>User</th>
+                        <th>Window</th>
+                        <th>Review deadline</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="reservation : ${pendingApprovals}">
+                        <td class="font-mono" th:text="${reservation.id}"></td>
+                        <td>
+                            <div class="font-medium" th:text="${reservation.vehicle.brand + ' ' + reservation.vehicle.model}"></div>
+                            <div class="text-xs text-base-content/70" th:text="${reservation.vehicle.licensePlate}"></div>
+                        </td>
+                        <td th:text="${reservation.user.fullName}"></td>
+                        <td th:text="${#temporals.format(reservation.startTime, 'dd.MM.yyyy HH:mm') + ' - ' + #temporals.format(reservation.endTime, 'dd.MM.yyyy HH:mm')}"></td>
+                        <td th:text="${reservation.reviewDeadline != null ? #temporals.format(reservation.reviewDeadline, 'dd.MM.yyyy HH:mm') : '-'}"></td>
+                        <td th:replace="~{components/badge :: reservationStateBadge(${reservation.state})}"></td>
+                        <td class="flex gap-2">
+                            <form th:action="@{/reservations/{id}/approve(id=${reservation.id})}" method="post">
+                                <button type="submit" class="btn btn-success btn-xs">Approve</button>
+                            </form>
+                            <form th:action="@{/reservations/{id}/reject(id=${reservation.id})}" method="post">
+                                <button type="submit" class="btn btn-error btn-xs">Reject</button>
+                            </form>
+                        </td>
+                    </tr>
+                    <tr th:if="${pendingApprovals.isEmpty()}">
+                        <td colspan="7" class="text-center text-base-content/70">No reservations are awaiting approval.</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+</body>
+</html>

@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="reservationStateBadge(state)" th:switch="${state != null ? state.name() : 'NONE'}">
+    <span th:case="'DRAFT'" class="badge badge-ghost">Draft</span>
+    <span th:case="'PENDING_APPROVAL'" class="badge badge-warning">Pending approval</span>
+    <span th:case="'CONFIRMED'" class="badge badge-success">Confirmed</span>
+    <span th:case="'REJECTED'" class="badge badge-error">Rejected</span>
+    <span th:case="'CANCELLED'" class="badge badge-neutral">Cancelled</span>
+    <span th:case="'EXPIRED'" class="badge badge-outline badge-secondary">Expired</span>
+    <span th:case="*" class="badge badge-ghost">Unknown</span>
+</div>
+</body>
+</html>
