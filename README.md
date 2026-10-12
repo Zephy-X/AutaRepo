@@ -118,7 +118,7 @@ Best for quick onboarding, demos, or teammates without a local Java/Maven toolch
 
 ## Teardown & Reset
 
-Stop all running containers and erase the database volume to start fresh
+Stop all running containers and erase the database volume to start fresh:
 
 ```bash
 docker compose down -v
