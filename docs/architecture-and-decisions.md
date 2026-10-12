@@ -422,9 +422,9 @@ enum persistence, and transaction behavior that mocks cannot verify.
 
 The current implementation realizes the selected lifecycle structure,
 state-machine branches, confirmed-only overlap query, service dependency
-direction, and persistence boundary. Two design decisions are not yet fully
-realized: `BR-Domain` requires a maximum reservation duration of 14 days, but
-`validateReservationWindow` currently checks only nullity, ordering, and future
-start; and temporal decisions call `LocalDateTime.now()` directly rather than
-using an injectable clock. These are deliberate follow-up code changes, not
-diagram changes, because the documented rules are the intended behavior.
+direction, persistence boundary, 14-day maximum duration, and injectable UTC
+clock. Rejection currently persists `REJECTED` without a notification; this is
+the remaining boundary mismatch because `NotificationServiceStub` only
+implements confirmation and cancellation notifications. The design remains
+explicit about this decision rather than silently treating rejection as
+fully integrated.

@@ -9,25 +9,32 @@ import cz.vsb.autarepo.autorepo.feature.vehicle.VehicleService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 @Transactional
 public class ReservationService {
+    private static final Duration MAX_RESERVATION_DURATION = Duration.ofDays(14);
+
     private final ReservationRepository reservationRepository;
     private final VehicleService vehicleService;
     private final UserService userService;
     private final NotificationServiceStub notificationService;
+    private final Clock clock;
 
     public ReservationService(ReservationRepository reservationRepository,
                               VehicleService vehicleService,
                               UserService userService,
-                              NotificationServiceStub notificationService) {
+                              NotificationServiceStub notificationService,
+                              Clock clock) {
         this.reservationRepository = reservationRepository;
         this.vehicleService = vehicleService;
         this.userService = userService;
         this.notificationService = notificationService;
+        this.clock = clock;
     }
 
     @Transactional(readOnly = true)
@@ -66,7 +73,7 @@ public class ReservationService {
                 .startTime(startTime)
                 .endTime(endTime)
                 .state(ReservationState.DRAFT)
-                .createdAt(LocalDateTime.now())
+                .createdAt(now())
                 .build();
 
         return reservationRepository.save(reservation);
@@ -121,7 +128,7 @@ public class ReservationService {
         }
 
         // BR-06: Expiration window check
-        if (!LocalDateTime.now().isBefore(reservation.getStartTime())) {
+        if (!now().isBefore(reservation.getStartTime())) {
             reservation.setState(ReservationState.EXPIRED);
             reservationRepository.save(reservation);
             throw new IllegalStateException("APPROVAL_WINDOW_EXPIRED");
@@ -172,7 +179,7 @@ public class ReservationService {
             throw new IllegalStateException("INVALID_STATE_TRANSITION");
         }
 
-        if (!LocalDateTime.now().isBefore(reservation.getStartTime())) {
+        if (!now().isBefore(reservation.getStartTime())) {
             throw new IllegalStateException("CANCELLATION_WINDOW_CLOSED");
         }
 
@@ -187,7 +194,7 @@ public class ReservationService {
             throw new IllegalArgumentException("INVALID_INTERVAL");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = now();
 
         if (!startTime.isBefore(endTime)) {
             throw new IllegalArgumentException("INVALID_INTERVAL");
@@ -196,6 +203,14 @@ public class ReservationService {
         if (!startTime.isAfter(now)) {
             throw new IllegalArgumentException("INTERVAL_IN_PAST");
         }
+
+        if (Duration.between(startTime, endTime).compareTo(MAX_RESERVATION_DURATION) > 0) {
+            throw new IllegalArgumentException("MAX_DURATION_EXCEEDED");
+        }
+    }
+
+    private LocalDateTime now() {
+        return LocalDateTime.now(clock);
     }
 
     @Transactional(readOnly = true)
@@ -226,6 +241,7 @@ public class ReservationService {
             case "INVALID_STATE_TRANSITION" -> "Invalid state transition for this operation.";
             case "INVALID_INTERVAL" -> "Invalid interval. Start time must be before end time.";
             case "INTERVAL_IN_PAST" -> "Interval start must be in the future.";
+            case "MAX_DURATION_EXCEEDED" -> "Reservation duration cannot exceed 14 days.";
             default -> errorCode;
         };
     }

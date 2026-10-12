@@ -54,19 +54,18 @@ not falsely reported execution results.
 | Confirmed-only half-open overlap query protects BR-02 | YES | `ReservationRepository` derived query and service callers | Keep; add isolated boundary tests. |
 | Luxury confirmation routes to `PENDING_APPROVAL` | YES | `confirmReservation` checks `Vehicle.requiresApproval` | Keep; add service test. |
 | Expired pending approval transitions to `EXPIRED` | YES | `approveReservation` checks `now >= startTime` | Keep; add clock-controlled test. |
-| Reservation duration is at most 14 days | NO | `validateReservationWindow` has no duration upper-bound check | Update code and add a boundary test; do not weaken the DD. |
-| Temporal rules use a stable/injectable clock | PARTLY | Service calls `LocalDateTime.now()` directly | Update code to inject `Clock`, then test exact boundaries. |
+| Reservation duration is at most 14 days | YES | `validateReservationWindow` rejects durations greater than 14 days with `MAX_DURATION_EXCEEDED` | Keep DD and implementation; boundary test added. |
+| Temporal rules use a stable/injectable clock | YES | `ReservationService` receives a `Clock`; production `TimeConfig` supplies UTC | Keep DD and implementation; fixed-clock tests added. |
 | Rejection emits a notification as required by the architecture boundary | NO | `rejectReservation` saves only; `NotificationServiceStub` has no rejection method | Decide and implement the notification contract before claiming full conformance. |
 
 ### Resolution
 
-The C05 documentation is retained as the intended design. Existing behavior
-that matches the design was compared against the current code; the targeted
-persistence test could not be re-executed here because the database
-configuration/service is unavailable. The three mismatches above remain
-explicit implementation work: enforce the 14-day maximum, inject the system
-clock, and complete the rejection notification boundary. The design was not
-rewritten to describe missing behavior.
+The C05 documentation is retained as the intended design. The service policy
+implementation now enforces the 14-day maximum and uses an injectable UTC
+clock; both decisions have focused unit coverage. The targeted persistence
+test could not be re-executed here because the database configuration/service
+is unavailable. Rejection notification remains an explicit implementation
+decision for a later change.
 
 ### Remaining design risk
 
@@ -74,8 +73,8 @@ rewritten to describe missing behavior.
   design has no explicit row-lock or optimistic-version strategy.
 - `PENDING_APPROVAL` remains open to availability checks until approval, as
   recorded in the baseline unknowns.
-- The service-policy test suite is incomplete, so lifecycle branch regressions
-  are not yet automatically detected.
+- Persistence verification still requires the configured PostgreSQL service;
+  the service-policy branches are covered by `ReservationServiceTest`.
 
 ### Commit/tag
 
