@@ -17,3 +17,68 @@ The test executed successfully. The PostgreSQL container accepted connections on
 ## Decision / what changes because of the result
 
 We confirm that Dockerized PostgreSQL with Spring Data JPA satisfies our persistence requirements. We will proceed with this baseline stack for the CP1 walking skeleton without introducing extra database migration tooling until needed.
+
+## C05 DD Verification Evidence
+
+### Tests derived from DD
+
+The C05 design derives eight verification cases covering interval validation,
+half-open overlap boundaries, confirmed-only allocation checks, approval
+routing, approval expiration, cancellation, and persistence collaboration.
+The complete matrix is documented in the C05 section of
+`docs/architecture-and-decisions.md`.
+
+### Unit/component tests executed
+
+The repository currently contains one component/integration verification test:
+
+- `ReservationPersistenceSpikeTest.testReservationPersistenceWithRelationships`
+  (`mvn test -Dtest=ReservationPersistenceSpikeTest`)
+- Execution in this environment: **blocked**; `mvn` is not installed, and the
+  Maven wrapper run cannot create the JPA context because no JDBC URL or
+  reachable PostgreSQL test service is configured.
+- Intended assertions: flush and clear the persistence context, reload a
+  `Reservation`, and verify persisted state, timestamps, user relationship,
+  and vehicle relationship. The earlier C01 evidence records a successful
+  execution in the configured Docker/PostgreSQL environment.
+
+The seven service-policy tests derived from C05 are specified but are not yet
+implemented in the test source tree. They are therefore verification targets,
+not falsely reported execution results.
+
+### Design ↔ implementation mismatch
+
+| DD decision | Implemented? | Evidence | Action |
+|---|---|---|---|
+| Reservation lifecycle is owned by `ReservationService` | YES | `feature/reservation/ReservationService.java` | Keep DD and implementation. |
+| Confirmed-only half-open overlap query protects BR-02 | YES | `ReservationRepository` derived query and service callers | Keep; add isolated boundary tests. |
+| Luxury confirmation routes to `PENDING_APPROVAL` | YES | `confirmReservation` checks `Vehicle.requiresApproval` | Keep; add service test. |
+| Expired pending approval transitions to `EXPIRED` | YES | `approveReservation` checks `now >= startTime` | Keep; add clock-controlled test. |
+| Reservation duration is at most 14 days | NO | `validateReservationWindow` has no duration upper-bound check | Update code and add a boundary test; do not weaken the DD. |
+| Temporal rules use a stable/injectable clock | PARTLY | Service calls `LocalDateTime.now()` directly | Update code to inject `Clock`, then test exact boundaries. |
+| Rejection emits a notification as required by the architecture boundary | NO | `rejectReservation` saves only; `NotificationServiceStub` has no rejection method | Decide and implement the notification contract before claiming full conformance. |
+
+### Resolution
+
+The C05 documentation is retained as the intended design. Existing behavior
+that matches the design was compared against the current code; the targeted
+persistence test could not be re-executed here because the database
+configuration/service is unavailable. The three mismatches above remain
+explicit implementation work: enforce the 14-day maximum, inject the system
+clock, and complete the rejection notification boundary. The design was not
+rewritten to describe missing behavior.
+
+### Remaining design risk
+
+- Concurrent confirmation and approval can still race because the current
+  design has no explicit row-lock or optimistic-version strategy.
+- `PENDING_APPROVAL` remains open to availability checks until approval, as
+  recorded in the baseline unknowns.
+- The service-policy test suite is incomplete, so lifecycle branch regressions
+  are not yet automatically detected.
+
+### Commit/tag
+
+No new commit or tag was created for this documentation-only change. The
+evidence remains associated with the existing `baseline-v0.2` application
+baseline.
