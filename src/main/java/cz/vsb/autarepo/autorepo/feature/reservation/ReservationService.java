@@ -1,27 +1,25 @@
 package cz.vsb.autarepo.autorepo.feature.reservation;
 
-import cz.vsb.autarepo.autorepo.common.domain.ReservationRules;
 import cz.vsb.autarepo.autorepo.common.exception.ApprovalWindowExpiredException;
 import cz.vsb.autarepo.autorepo.common.exception.CancellationWindowClosedException;
-import cz.vsb.autarepo.autorepo.common.exception.ConflictOverlapException;
 import cz.vsb.autarepo.autorepo.common.exception.ResourceNotFoundException;
 import cz.vsb.autarepo.autorepo.feature.reservation.dto.ReservationForm;
 import cz.vsb.autarepo.autorepo.feature.user.User;
 import cz.vsb.autarepo.autorepo.feature.user.UserService;
 import cz.vsb.autarepo.autorepo.feature.vehicle.Vehicle;
 import cz.vsb.autarepo.autorepo.feature.vehicle.VehicleService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.data.domain.Sort;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ReservationService {
 
@@ -29,8 +27,28 @@ public class ReservationService {
     private final VehicleService vehicleService;
     private final UserService userService;
     private final NotificationServiceStub notificationService;
-    private final ReservationRules reservationRules;
     private final Clock clock;
+
+    @Autowired
+    public ReservationService(Clock clock,
+                              ReservationRepository reservationRepository,
+                              VehicleService vehicleService,
+                              UserService userService,
+                              NotificationServiceStub notificationService) {
+        this.clock = clock;
+        this.reservationRepository = reservationRepository;
+        this.vehicleService = vehicleService;
+        this.userService = userService;
+        this.notificationService = notificationService;
+    }
+
+    public ReservationService(ReservationRepository reservationRepository,
+                              VehicleService vehicleService,
+                              UserService userService,
+                              NotificationServiceStub notificationService,
+                              Clock clock) {
+        this(clock, reservationRepository, vehicleService, userService, notificationService);
+    }
 
     public List<Reservation> findAll() {
         return reservationRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -56,7 +74,7 @@ public class ReservationService {
         LocalDateTime now = now();
         LocalDateTime start = form.toStartDateTime();
         LocalDateTime end = form.toEndDateTime();
-        reservationRules.validateReservationWindow(start, end, now);
+        validateReservationWindow(start, end, now);
 
         Vehicle vehicle = vehicleService.findById(form.vehicleId());
         User user = userService.findById(form.userId());
@@ -115,7 +133,7 @@ public class ReservationService {
             reservationRepository.save(reservation);
             reservationRepository.flush();
             notificationService.notifyReservationExpired(reservation);
-            throw new ApprovalWindowExpiredException("Approval window expired for reservation " + id);
+            throw new ApprovalWindowExpiredException("APPROVAL_WINDOW_EXPIRED");
         }
 
         Vehicle vehicle = vehicleService.findByIdForUpdate(reservation.getVehicle().getId());
@@ -152,7 +170,7 @@ public class ReservationService {
         }
         if (!reservation.isCancellable(now)) {
             if (!now.isBefore(reservation.getStartTime())) {
-                throw new CancellationWindowClosedException("Cancellation window closed: reservation has already started.");
+                throw new CancellationWindowClosedException("CANCELLATION_WINDOW_CLOSED");
             }
             throw new IllegalStateException("INVALID_STATE_TRANSITION");
         }
@@ -181,7 +199,7 @@ public class ReservationService {
     }
 
     public boolean isAvailable(Long vehicleId, LocalDateTime start, LocalDateTime end) {
-        reservationRules.validateReservationWindow(start, end, now());
+        validateReservationWindow(start, end, now());
         vehicleService.findById(vehicleId);
         return !reservationRepository.hasStateConflict(vehicleId, start, end);
     }
@@ -192,17 +210,27 @@ public class ReservationService {
 
     private void ensureNoBlockingConflict(Long vehicleId, LocalDateTime start, LocalDateTime end, Long ignoreReservationId) {
         if (reservationRepository.hasStateConflict(vehicleId, start, end, ignoreReservationId)) {
-            throw new ConflictOverlapException("Vehicle conflict: another reservation is active for this time slot.");
+            throw new IllegalArgumentException("CONFLICT_OVERLAP");
         }
     }
 
     private boolean shouldExpireReservation(Reservation reservation, LocalDateTime now) {
-        return reservationRules.shouldExpire(
-                reservation.getState(),
-                now,
-                reservation.getReviewDeadline(),
-                reservation.getStartTime()
-        );
+        return reservation.getState() == ReservationState.PENDING_APPROVAL
+                && ((!now.isBefore(reservation.getStartTime()))
+                || (reservation.getReviewDeadline() != null
+                && !now.isBefore(reservation.getReviewDeadline())));
+    }
+
+    private void validateReservationWindow(LocalDateTime start, LocalDateTime end, LocalDateTime now) {
+        if (start == null || end == null || !start.isBefore(end)) {
+            throw new IllegalArgumentException("INVALID_INTERVAL");
+        }
+        if (!start.isAfter(now)) {
+            throw new IllegalArgumentException("START_MUST_BE_FUTURE");
+        }
+        if (Duration.between(start, end).compareTo(Duration.ofDays(14)) > 0) {
+            throw new IllegalArgumentException("MAX_DURATION_EXCEEDED");
+        }
     }
 
     private LocalDateTime now() {

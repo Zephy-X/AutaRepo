@@ -151,7 +151,7 @@ public class ReservationViewController {
         try {
             Reservation res = action.apply(id);
             redirect.addFlashAttribute("successMessage", successMsg.apply(res));
-        } catch (IllegalStateException | ConflictOverlapException | CancellationWindowClosedException |
+        } catch (IllegalArgumentException | IllegalStateException | ConflictOverlapException | CancellationWindowClosedException |
                  ApprovalWindowExpiredException | ResourceNotFoundException e) {
             redirect.addFlashAttribute("errorMessage", DomainErrorMessages.resolve(e.getMessage()));
         }
