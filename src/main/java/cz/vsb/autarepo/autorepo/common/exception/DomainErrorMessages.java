@@ -15,7 +15,8 @@ public final class DomainErrorMessages {
             case "INVALID_STATE_TRANSITION" -> "Invalid state transition for this operation.";
             case "INVALID_INTERVAL" -> "Invalid interval. Start time must be before end time.";
             case "INSUFFICIENT_LEAD_TIME" -> "Start time must be at least two hours from now.";
-            case "MAXIMUM_DURATION_EXCEEDED" -> "Reservation duration cannot exceed 14 days.";
+            case "MAX_DURATION_EXCEEDED" -> "Reservation duration cannot exceed 14 days.";
+            case "START_MUST_BE_FUTURE" -> "Reservation start time must be in the future.";
             default -> errorCode;
         };
     }
