@@ -90,6 +90,8 @@
             <span class="badge badge-success" th:if="${availabilityStatus == 'AVAILABLE'}">AVAILABLE</span>
             <span class="badge badge-error" th:if="${availabilityStatus == 'UNAVAILABLE'}">UNAVAILABLE</span>
             <span class="badge badge-warning" th:if="${availabilityStatus == 'INVALID'}">INVALID DATES</span>
+            <span class="badge badge-warning" th:if="${availabilityStatus != null and availabilityStatus != 'AVAILABLE' and availabilityStatus != 'UNAVAILABLE' and availabilityStatus != 'INVALID'}"
+                  th:text="${availabilityStatus}">Status message</span>
           </div>
         </div>
       </form>

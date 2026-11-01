@@ -1,5 +1,6 @@
 package cz.vsb.autarepo.autorepo.feature.reservation;
 
+import cz.vsb.autarepo.autorepo.common.exception.ConflictOverlapException;
 import cz.vsb.autarepo.autorepo.feature.reservation.dto.ReservationForm;
 import cz.vsb.autarepo.autorepo.feature.user.User;
 import cz.vsb.autarepo.autorepo.feature.user.UserService;
@@ -69,7 +70,7 @@ class ReservationServiceTest {
 
         assertThatThrownBy(() -> service.createReservation(form))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("START_MUST_BE_FUTURE");
+                .hasMessage("INSUFFICIENT_LEAD_TIME");
     }
 
     @Test
@@ -78,7 +79,7 @@ class ReservationServiceTest {
 
         assertThatThrownBy(() -> service.createReservation(form))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("MAX_DURATION_EXCEEDED");
+                .hasMessage("MAXIMUM_DURATION_EXCEEDED");
     }
 
     @Test
@@ -108,7 +109,7 @@ class ReservationServiceTest {
         when(reservationRepository.hasStateConflict(1L, start, start.plusHours(2), 3L)).thenReturn(true);
 
         assertThatThrownBy(() -> service.confirmReservation(3L))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(ConflictOverlapException.class)
                 .hasMessage("CONFLICT_OVERLAP");
     }
 
@@ -125,6 +126,33 @@ class ReservationServiceTest {
         assertThat(result.getState()).isEqualTo(ReservationState.PENDING_APPROVAL);
         verify(notificationService).notifyReservationPendingApproval(result);
         verify(notificationService, never()).notifyReservationConfirmed(any());
+    }
+
+    @Test
+    void rejectsConfirmationForInactiveVehicle() {
+        vehicle.setActive(false);
+        LocalDateTime start = NOW.plusDays(1);
+        Reservation draft = reservation(start, start.plusHours(2), ReservationState.DRAFT);
+        when(reservationRepository.findById(3L)).thenReturn(Optional.of(draft));
+
+        assertThatThrownBy(() -> service.confirmReservation(3L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("RESOURCE_INACTIVE");
+        verify(notificationService, never()).notifyReservationConfirmed(any());
+        verify(notificationService, never()).notifyReservationPendingApproval(any());
+    }
+
+    @Test
+    void rejectsConfirmationWhenStartHasAlreadyPassed() {
+        LocalDateTime start = NOW.minusMinutes(30);
+        Reservation draft = reservation(start, start.plusHours(2), ReservationState.DRAFT);
+        when(reservationRepository.findById(3L)).thenReturn(Optional.of(draft));
+
+        assertThatThrownBy(() -> service.confirmReservation(3L))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("START_MUST_BE_FUTURE");
+        verify(notificationService, never()).notifyReservationConfirmed(any());
+        verify(notificationService, never()).notifyReservationPendingApproval(any());
     }
 
     @Test

@@ -1,7 +1,9 @@
 package cz.vsb.autarepo.autorepo.feature.reservation;
 
+import cz.vsb.autarepo.autorepo.common.domain.ReservationRules;
 import cz.vsb.autarepo.autorepo.common.exception.ApprovalWindowExpiredException;
 import cz.vsb.autarepo.autorepo.common.exception.CancellationWindowClosedException;
+import cz.vsb.autarepo.autorepo.common.exception.ConflictOverlapException;
 import cz.vsb.autarepo.autorepo.common.exception.ResourceNotFoundException;
 import cz.vsb.autarepo.autorepo.feature.reservation.dto.ReservationForm;
 import cz.vsb.autarepo.autorepo.feature.user.User;
@@ -28,6 +30,7 @@ public class ReservationService {
     private final UserService userService;
     private final NotificationServiceStub notificationService;
     private final Clock clock;
+    private final ReservationRules reservationRules;
 
     @Autowired
     public ReservationService(Clock clock,
@@ -35,11 +38,21 @@ public class ReservationService {
                               VehicleService vehicleService,
                               UserService userService,
                               NotificationServiceStub notificationService) {
+        this(clock, reservationRepository, vehicleService, userService, notificationService, new ReservationRules());
+    }
+
+    public ReservationService(Clock clock,
+                              ReservationRepository reservationRepository,
+                              VehicleService vehicleService,
+                              UserService userService,
+                              NotificationServiceStub notificationService,
+                              ReservationRules reservationRules) {
         this.clock = clock;
         this.reservationRepository = reservationRepository;
         this.vehicleService = vehicleService;
         this.userService = userService;
         this.notificationService = notificationService;
+        this.reservationRules = reservationRules;
     }
 
     public ReservationService(ReservationRepository reservationRepository,
@@ -74,7 +87,7 @@ public class ReservationService {
         LocalDateTime now = now();
         LocalDateTime start = form.toStartDateTime();
         LocalDateTime end = form.toEndDateTime();
-        validateReservationWindow(start, end, now);
+        reservationRules.validateReservationWindow(start, end, now);
 
         Vehicle vehicle = vehicleService.findById(form.vehicleId());
         User user = userService.findById(form.userId());
@@ -102,9 +115,17 @@ public class ReservationService {
 
         Vehicle vehicle = vehicleService.findByIdForUpdate(reservation.getVehicle().getId());
         reservation.setVehicle(vehicle);
-        ensureNoBlockingConflict(reservation.getVehicle().getId(), reservation.getStartTime(), reservation.getEndTime(), reservation.getId());
 
         LocalDateTime now = now();
+        if (!vehicle.isActive()) {
+            throw new IllegalStateException("RESOURCE_INACTIVE");
+        }
+        if (!now.isBefore(reservation.getStartTime())) {
+            throw new IllegalStateException("START_MUST_BE_FUTURE");
+        }
+
+        ensureNoBlockingConflict(reservation.getVehicle().getId(), reservation.getStartTime(), reservation.getEndTime(), reservation.getId());
+
         if (vehicle.isRequiresApproval()) {
             reservation.requestApproval(now);
             Reservation saved = reservationRepository.save(reservation);
@@ -128,7 +149,7 @@ public class ReservationService {
             throw new IllegalStateException("INVALID_STATE_TRANSITION");
         }
 
-        if (shouldExpireReservation(reservation, now)) {
+        if (reservationRules.shouldExpire(reservation.getState(), now, reservation.getReviewDeadline(), reservation.getStartTime())) {
             reservation.expire(now);
             reservationRepository.save(reservation);
             reservationRepository.flush();
@@ -168,7 +189,7 @@ public class ReservationService {
         if (reservation.getState() == ReservationState.CANCELLED) {
             throw new IllegalStateException("ALREADY_CANCELLED");
         }
-        if (!reservation.isCancellable(now)) {
+        if (!reservationRules.canCancel(reservation.getState(), now, reservation.getStartTime())) {
             if (!now.isBefore(reservation.getStartTime())) {
                 throw new CancellationWindowClosedException("CANCELLATION_WINDOW_CLOSED");
             }
@@ -188,7 +209,7 @@ public class ReservationService {
         LocalDateTime now = now();
 
         for (Reservation reservation : pending) {
-            if (shouldExpireReservation(reservation, now)) {
+            if (reservationRules.shouldExpire(reservation.getState(), now, reservation.getReviewDeadline(), reservation.getStartTime())) {
                 reservation.expire(now);
                 reservationRepository.save(reservation);
                 reservationRepository.flush();
@@ -199,8 +220,11 @@ public class ReservationService {
     }
 
     public boolean isAvailable(Long vehicleId, LocalDateTime start, LocalDateTime end) {
-        validateReservationWindow(start, end, now());
-        vehicleService.findById(vehicleId);
+        reservationRules.validateReservationWindow(start, end, now());
+        Vehicle vehicle = vehicleService.findById(vehicleId);
+        if (!vehicle.isActive()) {
+            throw new IllegalStateException("RESOURCE_INACTIVE");
+        }
         return !reservationRepository.hasStateConflict(vehicleId, start, end);
     }
 
@@ -210,26 +234,7 @@ public class ReservationService {
 
     private void ensureNoBlockingConflict(Long vehicleId, LocalDateTime start, LocalDateTime end, Long ignoreReservationId) {
         if (reservationRepository.hasStateConflict(vehicleId, start, end, ignoreReservationId)) {
-            throw new IllegalArgumentException("CONFLICT_OVERLAP");
-        }
-    }
-
-    private boolean shouldExpireReservation(Reservation reservation, LocalDateTime now) {
-        return reservation.getState() == ReservationState.PENDING_APPROVAL
-                && ((!now.isBefore(reservation.getStartTime()))
-                || (reservation.getReviewDeadline() != null
-                && !now.isBefore(reservation.getReviewDeadline())));
-    }
-
-    private void validateReservationWindow(LocalDateTime start, LocalDateTime end, LocalDateTime now) {
-        if (start == null || end == null || !start.isBefore(end)) {
-            throw new IllegalArgumentException("INVALID_INTERVAL");
-        }
-        if (!start.isAfter(now)) {
-            throw new IllegalArgumentException("START_MUST_BE_FUTURE");
-        }
-        if (Duration.between(start, end).compareTo(Duration.ofDays(14)) > 0) {
-            throw new IllegalArgumentException("MAX_DURATION_EXCEEDED");
+            throw new ConflictOverlapException("CONFLICT_OVERLAP");
         }
     }
 

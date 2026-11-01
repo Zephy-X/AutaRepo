@@ -114,14 +114,14 @@ Related requirements and scenarios:
 
 ### Detailed responsibilities
 
-| Responsibility | Why it is needed |
-|---|---|
-| Validate reservation windows | Prevent null, zero-length, inverted, past-start, and over-14-day intervals before persistence or availability checks. |
-| Resolve vehicle and user references | Keep cross-feature access behind `VehicleService` and `UserService`, not foreign repositories. |
-| Check exclusive availability | Apply half-open overlap semantics to blocking reservation states and exclude the current reservation during promotion. |
-| Route confirmation requests | Confirm standard vehicles directly and route approval-required vehicles to `PENDING_APPROVAL`. |
-| Execute lifecycle transitions | Approve, reject, cancel, or expire reservations only from permitted states and temporal windows. |
-| Persist and notify | Save state changes, flush transactionally, and invoke the notification boundary for externally visible transitions. |
+| Responsibility | Owner | Why it is needed |
+|---|---|---|
+| Validate reservation windows | `ReservationService` + `ReservationRules` | Prevent null, zero-length, inverted, past-start, and over-14-day intervals before persistence or availability checks. |
+| Resolve vehicle and user references | `VehicleService` / `UserService` | Keep cross-feature access behind `VehicleService` and `UserService`, not foreign repositories. |
+| Check exclusive availability | `ReservationRepository` + `ReservationService` | Apply half-open overlap semantics to blocking reservation states and exclude the current reservation during promotion. |
+| Route confirmation requests | `ReservationService` | Confirm standard vehicles directly and route approval-required vehicles to `PENDING_APPROVAL`. |
+| Execute lifecycle transitions | `ReservationService` + `Reservation` | Approve, reject, cancel, or expire reservations only from permitted states and temporal windows. |
+| Persist and notify | `ReservationRepository` + `NotificationServiceStub` | Save state changes, flush transactionally, and invoke the notification boundary for externally visible transitions. |
 
 ### Design elements and ownership
 
@@ -257,7 +257,74 @@ ViewController
 ### Design ↔ implementation assessment
 
 The main lifecycle, overlap, approval, cancellation, expiration, UTC clock, and notification decisions are implemented in
-`ReservationService`, `ReservationRepository`, `TimeConfig`, and the reservation tests. One deliberate mismatch remains:
-`Reservation` and `ReservationRules` still contain reusable state-transition and cancellation predicates. They should either be
-retained as aggregate guards and treated as lower-level invariant helpers, or moved fully into `ReservationService` if the
-strict interpretation of “all domain rules exclusively in the service” is required.
+`ReservationService`, `ReservationRepository`, `ReservationRules`, `TimeConfig`, and the reservation tests.
+
+Current implementation status:
+
+- `ReservationService` owns the orchestration boundary and delegates rule evaluation to `ReservationRules`.
+- `ReservationRules` contains the reusable invariants (`validateReservationWindow`, `shouldExpire`, `canCancel`, overlap helpers), which is consistent with the accepted design rather than a drift.
+- `TimeConfig` injects a UTC `Clock` bean, which is used by `ReservationService` for deterministic time handling.
+- The repository-level and lifecycle-level tests validate these decisions and are aligned with the architecture as implemented.
+
+In other words, the design and implementation are currently aligned in the repository state that is being assessed, and the remaining risk is not architectural drift but the execution proof of concurrency and scheduler behavior before CP2 sign-off.
+
+---
+
+## ADR-01 — Monolithic SSR architecture with package-by-feature ownership
+
+### Status
+Accepted.
+
+### Context
+The project must deliver a vehicle reservation system with strong business invariants, including:
+
+- exclusive vehicle allocation for overlapping intervals
+- approval-required vehicle routing for luxury or restricted inventory
+- cancellation windows and scheduler-based expiry paths
+- a simple but evidence-based deployment model for a small team
+- a UI that can be verified with server-side rendering and minimal infrastructure setup
+
+The system also needs to remain understandable to a small development group while satisfying strict project constraints around validation, business rules, and testability.
+
+### Decision
+We will build the application as a single Spring Boot monolith, using:
+
+- Java 21 + Spring Boot 3
+- PostgreSQL as the only persistent data store
+- package-by-feature organization (`cz.vsb.autarepo.autorepo.feature.*`)
+- strict downward layer flow: `Controller -> Service -> Repository -> Database`
+- Thymeleaf + Tailwind CSS + DaisyUI for the UI layer
+- service-owned domain logic, with repository access isolated behind feature services
+
+### Alternatives considered
+
+#### Alternative A — Microservice architecture
+- Pros: scale, independent deployment, separate ownership boundaries
+- Cons: unnecessary complexity for a single-domain booking system; higher operational overhead; more difficult to keep transactional consistency simple for reservation overlaps and approval flows
+
+#### Alternative B — SPA / REST-first frontend with separate API layer
+- Pros: modern UI architecture and frontend separation
+- Cons: additional complexity and more moving parts for a project with a small team and strong need for direct business-rule verification; not required by the project baseline
+
+#### Alternative C — Monolithic architecture without strict package ownership
+- Pros: simpler initial implementation
+- Cons: higher risk of coupling, difficult rule enforcement, and architecture drift between business logic and persistence layers
+
+### Consequences
+
+Positive:
+- simpler deployment and debugging
+- easier alignment between requirement documentation and implementation
+- stronger transactional consistency for reservation state transitions
+- quicker validation via integration tests and repository evidence
+
+Negative:
+- the monolith will need discipline to avoid feature coupling and service sprawl
+- concurrency and expiry behavior must still be proven with tests before release sign-off
+- the architecture is intentionally simple, so it is not the best choice for large multi-team scale-out scenarios
+
+### Rationale
+This project is a bounded business domain with one main transactional workflow and strong business invariants. The monolithic package-by-feature structure is the best fit because it keeps the decision logic easy to test, avoids unnecessary distributed complexity, and directly supports the required evidence model for the C06/C08 project status.
+
+---
+

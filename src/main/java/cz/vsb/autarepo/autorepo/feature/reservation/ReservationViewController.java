@@ -28,6 +28,7 @@ public class ReservationViewController {
     private static final String VIEW = "feature/reservation/list";
     private static final String FRAGMENT_SECTION = VIEW + " :: section";
     private static final String FRAGMENT_AVAILABILITY = VIEW + " :: availability-status";
+    private static final String AVAILABILITY_INVALID = "INVALID";
 
     private final ReservationService reservationService;
     private final VehicleService vehicleService;
@@ -102,13 +103,12 @@ public class ReservationViewController {
                                     Model model) {
         String status;
         if (result.hasErrors()) {
-            status = "INVALID";
+            status = AVAILABILITY_INVALID;
         } else {
             try {
                 status = reservationService.checkAvailabilityStatus(form.vehicleId(), form.toStartDateTime(), form.toEndDateTime());
-            } catch (IllegalArgumentException e) {
-                result.rejectValue("startDate", "reservation.window.invalid", DomainErrorMessages.resolve(e.getMessage()));
-                status = "INVALID";
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                status = DomainErrorMessages.resolve(e.getMessage());
             }
         }
 
