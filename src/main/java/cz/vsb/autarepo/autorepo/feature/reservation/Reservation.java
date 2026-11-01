@@ -68,6 +68,7 @@ public class Reservation {
     public void confirm(LocalDateTime now) {
         requireState(ReservationState.DRAFT);
         assertVehicleActive();
+        assertStartInFuture(now);
         this.state = ReservationState.CONFIRMED;
         this.approvedAt = now;
     }
@@ -75,6 +76,7 @@ public class Reservation {
     public void requestApproval(LocalDateTime now) {
         requireState(ReservationState.DRAFT);
         assertVehicleActive();
+        assertStartInFuture(now);
         this.state = ReservationState.PENDING_APPROVAL;
         this.submittedAt = now;
         this.reviewDeadline = resolveReviewDeadline(now);
@@ -152,6 +154,12 @@ public class Reservation {
     private void assertVehicleActive() {
         if (vehicle == null || !vehicle.isActive()) {
             throw new IllegalStateException("RESOURCE_INACTIVE");
+        }
+    }
+
+    private void assertStartInFuture(LocalDateTime now) {
+        if (now == null || !now.isBefore(this.startTime)) {
+            throw new IllegalStateException("START_MUST_BE_FUTURE");
         }
     }
 }

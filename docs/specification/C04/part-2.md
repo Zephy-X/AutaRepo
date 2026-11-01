@@ -414,7 +414,7 @@ ReservationService --> Reservation
 
 **Code restructuring required by accepted design:** none major (current structure already matches accepted ownership model).  
 **CHANGE performed for C03:** add explicit architecture-conformance verification rule/check artifact (L2).  
-**Commit/tag:** `<fill with actual commit/tag after adding check artifact>`
+**Commit/tag:** `cd1f93c341afadab1c5176b5303bf100fb8eea7b`
 
 ---
 
@@ -452,4 +452,4 @@ PASS on current codebase (state mutation calls centralized in `ReservationServic
 2. Notification boundary is a stub; production-grade retry/idempotency semantics are not yet implemented.
 3. Scheduler-driven expiration is periodic; exact SLA precision depends on trigger interval and clock consistency.
 
-**Commit/tag:** `<fill exact commit/tag>`
+**Commit/tag:** `cd1f93c341afadab1c5176b5303bf100fb8eea7b`

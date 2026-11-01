@@ -34,6 +34,24 @@ class ReservationRulesTest {
     }
 
     @Test
+    void exactlyTwoHoursLeadTimeIsAllowed() {
+        LocalDateTime now = LocalDateTime.parse("2026-01-01T09:00:00");
+        LocalDateTime start = now.plus(2, ChronoUnit.HOURS);
+        LocalDateTime end = start.plus(1, ChronoUnit.HOURS);
+
+        assertThat(rules.isValidReservationWindow(start, end, now)).isTrue();
+    }
+
+    @Test
+    void lessThanTwoHoursLeadTimeIsRejected() {
+        LocalDateTime now = LocalDateTime.parse("2026-01-01T09:00:00");
+        LocalDateTime start = now.plus(90, ChronoUnit.MINUTES);
+        LocalDateTime end = start.plus(1, ChronoUnit.HOURS);
+
+        assertThat(rules.isValidReservationWindow(start, end, now)).isFalse();
+    }
+
+    @Test
     void blockingStatesAndExpirationAreDetected() {
         LocalDateTime now = LocalDateTime.parse("2026-01-01T08:00:00");
         LocalDateTime start = now.plus(1, ChronoUnit.DAYS);
