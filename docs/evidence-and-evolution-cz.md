@@ -7,6 +7,17 @@
 
 Tento snapshot repozitáře je stejný commit, který byl vyhodnocen během externího auditu C06; reporting stav níže je proto sladěn se stejným baseline a současným working tree pro korekční změny.
 
+## Index evidence C02/C03/C05
+
+GitHub Issues dokazují historii trackování práce, ale uzavřený issue sám o sobě nedokazuje, že byly vytvořeny všechny povinné výstupy. Tabulka níže odděluje repository artefakty, tracking záznamy, implementační commity a ověřovací důkazy. Pro tyto deliverables nebyl nalezen repository tag; proto jsou použity přesné odkazy na commity a pull requesty.
+
+| Kurz / deliverable | Požadavek nebo výstup | Typ evidence | Přesná evidence | Status | Poznámky / zbývající mezera |
+|---|---|---|---|---|---|
+| C02 | Baseline v0.2 approval workflow, dopad na slices, pravidla a verification examples | Repository dokument; issue; PR; commit | [`docs/baseline-v0.2-change-record.md`](baseline-v0.2-change-record.md); [Issue #6](https://github.com/Zephy-X/AutaRepo/issues/6); [PR #7](https://github.com/Zephy-X/AutaRepo/pull/7); [commit `70f0d33`](https://github.com/Zephy-X/AutaRepo/commit/70f0d33d20c7fd231d27b79fd8e175247d3c9049) | VERIFIED | Baseline record obsahuje změnový dopad a provedené verification examples. Samostatný repository tag nebyl nalezen. |
+| C03 Part A | AS-IS mapování scénáře, implementační prvky, stav/pravidla, závislosti a strukturální evidence | Repository adresář; issue; PR; commit | [`docs/specification/C03/`](specification/C03/); [Issue #8](https://github.com/Zephy-X/AutaRepo/issues/8); [PR #9](https://github.com/Zephy-X/AutaRepo/pull/9); [commit `de27a59`](https://github.com/Zephy-X/AutaRepo/commit/de27a59c6395e2625ceb4a4b7d6be4cc58241b27) | VERIFIED | Artefakty C03 Part A jsou přítomné a propojené s tracking issue a merged PR. |
+| C03 Part B / architektura | Architektonické drivery, doménový model, views, runtime verification a design-to-code delta | Repository dokument; issue; PR; commit | [`docs/specification/C04/part-2.md`](specification/C04/part-2.md); [Issue #12](https://github.com/Zephy-X/AutaRepo/issues/12); [PR #11](https://github.com/Zephy-X/AutaRepo/pull/11); [commit `1e22e48`](https://github.com/Zephy-X/AutaRepo/commit/1e22e4840f4474d62b8f7716acde577b7fdb03aa) | PARTLY VERIFIED | Dokument má nadpis „C03 — Architecture Evidence“, ale je uložený pod `C04`; issue požadoval centralizaci v tomto evidence souboru, což dříve nebylo splněno. |
+| C05 | Detailed design reservation lifecycle, kontrakty, odpovědnosti, strukturální/dynamický návrh a odvození testů | Repository dokument; issue; PR; tvrzení o implementaci/testech | [`docs/architecture-and-decisions.md#c05-detailed-design`](architecture-and-decisions.md#c05-detailed-design); [Issue #13](https://github.com/Zephy-X/AutaRepo/issues/13); [PR #11](https://github.com/Zephy-X/AutaRepo/pull/11) | PARTLY VERIFIED | C05 design section a tracking záznamy existují a PR #11 tvrdí unit i PostgreSQL verification. Samostatný C05 evidence index a nezávisle zopakovaný testovací záznam nebyl před touto opravou identifikován. |
+
 ## Audit C06 assessment
 
 ### F1 — Confirm Reservation preconditions byly v produkčním kódu porušeny
@@ -37,16 +48,18 @@ Tento snapshot repozitáře je stejný commit, který byl vyhodnocen během exte
   - Verification command: `./mvnw.cmd test`
   - Výsledek: exit code `0`; prošla celá Java test suite, včetně opraveného overlap assertion a layoutu lifecycle checks.
 
-### F3 — Chybějící evidence a release markery byly skutečnou dokumentační mezerou
+### F3 — Traceability evidence byla neúplná a původní claim byl příliš široký
 
-- Claim ID & Requirement: `F3` / C02, C03 a C05 evidence obligations ve formuláři a `docs/evidence-and-evolution.md`.
+- Claim ID & Requirement: `F3` / traceability povinných výstupů C02, C03 a C05 ve formuláři a projektové evidenci.
 - Reviewer Note: očekával se explicitní evidence section a přesné commit/tag záznamy pro C02/C03/C05.
 - Our Verification: `VERIFIED FINDING`
-- Disposition: `ACCEPT`
+- Disposition: `PARTLY ACCEPTED / CLAIM REFINED`
 - Evidence & Resolution:
-  - Původní soubor `docs/evidence-and-evolution.md` obsahoval pouze C01 spike a částečné poznámky k C05; nebyly zde žádné sekce pro C02/C03 a žádný explicitní baseline/reporting commit record.
-  - `docs/specification/C04/part-2.md` stále obsahoval placeholder strings na `...:417` a `...:455`.
-  - Fix: doplněny baseline/reporting identifiers, přidán audit C06 a nahrazeny placeholder commit/tag strings ověřenou hodnotou `cd1f93c341afadab1c5176b5303bf100fb8eea7b` v `docs/specification/C04/part-2.md`.
+  - GitHub Issues dokazují, že práce na C02, C03 a C05 byla trackována: [#6](https://github.com/Zephy-X/AutaRepo/issues/6), [#8](https://github.com/Zephy-X/AutaRepo/issues/8), [#12](https://github.com/Zephy-X/AutaRepo/issues/12) a [#13](https://github.com/Zephy-X/AutaRepo/issues/13). Jejich propojené PR a commity poskytují další traceability.
+  - Samotné issue tracking nedokazuje, že byl vytvořen a nezávisle ověřen každý povinný výstup.
+  - Existující evidence je rozložena mezi `docs/baseline-v0.2-change-record.md`, `docs/specification/C03/`, `docs/specification/C04/part-2.md`, `docs/architecture-and-decisions.md` a propojené GitHub záznamy.
+  - Původní finding proto zůstává platný jako traceability/documentation gap, ale tvrzení, že evidence C02/C03/C05 jednoduše chyběla, bylo příliš široké. C02 a C03 Part A jsou ověřené; C03 Part B a C05 zůstávají částečně ověřené kvůli pojmenování, centralizaci a mezeře v nezávislém ověření.
+  - Fix: doplněn výše uvedený evidence index a ekvivalentní český index s přesnými cestami, URL, commity, statusy a zbývajícími mezerami. Repository tag pro tyto deliverables nebyl nalezen.
 
 ### Supplementary PARTLY položky recenzované a dispositioned
 
@@ -126,5 +139,5 @@ Používat konzistentní ID napříč projektovými dokumenty: `R-01`..`R-05`.
 
 - Ověřená oprava F1: `Resource inactive` a `start time already reached` se nyní odmítají před přechodem stavu.
 - Přijaté a opravené F2: `ReservationService` nyní deleguje vyhodnocování pravidel do `ReservationRules` a při překryvu hází `ConflictOverlapException`, což odpovídá designu H2/H1.
-- Dokumentační mezera F3: uzavřena přidáním evidence auditu a baseline commit markerů.
+- Dokumentační mezera F3: claim byl zpřesněn, nikoli zamítnut; GitHub tracking je odděleně přiznán od repository evidence a zbývající mezery C03 Part B/C05 jsou explicitně zaznamenány.
 - Automatická verifikace: `./mvnw.cmd test` skončila úspěšně s kódem `0`.
