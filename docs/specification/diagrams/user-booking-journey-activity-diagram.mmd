@@ -1,0 +1,50 @@
+%%{init: {"theme": "base", "flowchart": {"curve": "basis", "nodeSpacing": 30, "rankSpacing": 45}}}%%
+flowchart TD
+    Start((Start)) --> Browse["Browse vehicles<br/>and choose interval"]
+    Browse --> Availability["OP-02<br/>Check availability"]
+    Availability --> Available{"Vehicle available?"}
+    Available -- No --> Browse
+    Available -- Yes --> Create["OP-01<br/>Create reservation"]
+    Create --> Draft["Reservation = DRAFT<br/>vehicle is not locked"]
+    Draft --> Continue{"Continue to confirmation?"}
+    Continue -- No --> CancelDraft["OP-04 cancel<br/>state = CANCELLED"]
+    CancelDraft --> EndCancel((End))
+    Continue -- Yes --> Confirm["OP-03<br/>Confirm reservation"]
+    Confirm --> Approval{"requiresApproval?"}
+
+    Approval -- No --> Conflict["Check confirmed overlap"]
+    Conflict --> ConflictFound{"Overlap found?"}
+    ConflictFound -- Yes --> Retry["Remain DRAFT<br/>show conflict"]
+    Retry --> Browse
+    ConflictFound -- No --> Confirmed["state = CONFIRMED<br/>vehicle allocation locked"]
+
+    Approval -- Yes --> Pending["state = PENDING_APPROVAL<br/>queue for approver"]
+    Pending --> Decision{"Approver decision<br/>before start?"}
+    Decision -- Approve --> ApprovalConflict["Check confirmed overlap"]
+    ApprovalConflict --> ApprovalConflictFound{"Overlap found?"}
+    ApprovalConflictFound -- Yes --> Decision
+    ApprovalConflictFound -- No --> Confirmed
+    Decision -- Reject --> Rejected["state = REJECTED"]
+    Decision -- Expired --> Expired["state = EXPIRED"]
+    Decision -- Cancel --> CancelPending["state = CANCELLED"]
+
+    Confirmed --> Change{"Cancel before start?"}
+    Change -- No --> Pickup["Pick up vehicle<br/>and complete trip"]
+    Pickup --> EndSuccess((End))
+    Change -- Yes --> CancelConfirmed["OP-04 cancel<br/>release allocation"]
+    CancelConfirmed --> EndCancel
+
+    Rejected --> EndRejected((End))
+    Expired --> EndExpired((End))
+    CancelPending --> EndCancel
+
+    classDef startEnd fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#1e293b
+    classDef action fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    classDef state fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef decision fill:#ffedd5,stroke:#ea580c,color:#7c2d12
+    classDef error fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    class Start,EndCancel,EndSuccess,EndRejected,EndExpired startEnd
+    class Browse,Availability,Create,Confirm,Pickup action
+    class Draft,Confirmed,Pending,CancelDraft,CancelPending,CancelConfirmed state
+    class Available,Continue,Approval,ConflictFound,Decision,ApprovalConflictFound,Change decision
+    class Retry,Rejected,Expired error

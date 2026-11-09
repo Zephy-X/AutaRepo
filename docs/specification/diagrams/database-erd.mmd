@@ -1,29 +1,31 @@
+%%{init: {"theme": "base", "er": {"layoutDirection": "LR"}}}%%
 erDiagram
     USERS ||--o{ RESERVATIONS : places
     VEHICLES ||--o{ RESERVATIONS : assigned_to
 
     USERS {
         bigint id PK
-        string fullName "Client display name (unauthenticated in v0.1)"
-        string email "Client contact reference"
+        varchar full_name
+        varchar email
+        varchar role
     }
 
     VEHICLES {
         bigint id PK
-        string brand "Vehicle brand / make"
-        string model "Vehicle model"
-        int year "Manufacturing year"
-        string licensePlate "Unique vehicle registration plate"
-        boolean isActive "Operational status: true = available for booking, false = maintenance"
-        boolean requiresApproval "Prepares for v0.2 change: true = luxury/special car needing approval"
+        varchar brand
+        varchar model
+        varchar vin
+        varchar license_plate UK
+        boolean is_active
+        boolean requires_approval
     }
 
     RESERVATIONS {
         bigint id PK
-        bigint vehicle_id FK "References VEHICLES(id)"
-        bigint user_id FK "References USERS(id)"
-        timestamp startTime "Start boundary [startTime, endTime)"
-        timestamp endTime "End boundary [startTime, endTime)"
-        string state "Enum: DRAFT | CONFIRMED | CANCELLED"
-        timestamp createdAt "Timestamp when draft was instantiated"
+        bigint vehicle_id FK
+        bigint user_id FK
+        timestamp start_time
+        timestamp end_time
+        varchar state "DRAFT | PENDING_APPROVAL | CONFIRMED | REJECTED | CANCELLED | EXPIRED"
+        timestamp created_at
     }

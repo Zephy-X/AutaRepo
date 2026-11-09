@@ -1,4 +1,6 @@
+%%{init: {"theme": "base", "flowchart": {"curve": "basis", "nodeSpacing": 35, "rankSpacing": 45}}}%%
 flowchart LR
+<<<<<<< Updated upstream
     Approver(("Approver<br>(Fleet Manager)"))
     User(("User<br>(Client)"))
     System(("System<br>(Scheduler / Worker)"))
@@ -19,9 +21,26 @@ flowchart LR
 
 %% User Base Interactions (Approver inherits all of these)
     User --> UC2
+=======
+    User(("User<br/>/ Renter"))
+    Approver(("Approver<br/>/ Fleet Manager"))
+
+    subgraph System["AutoRepo reservation system"]
+        direction TB
+        UC1(["UC-01<br/>Create reservation"])
+        UC2(["UC-02<br/>Check availability"])
+        UC3(["UC-03<br/>Confirm reservation"])
+        UC4(["UC-04<br/>Cancel reservation"])
+        UC5(["UC-05<br/>Approve reservation"])
+        UC6(["UC-06<br/>Reject reservation"])
+    end
+
+>>>>>>> Stashed changes
     User --> UC1
+    User --> UC2
     User --> UC3
     User --> UC4
+<<<<<<< Updated upstream
 
 %% Approver-Specific Interactions
     Approver --> UC5
@@ -39,3 +58,20 @@ flowchart LR
     style UC5 fill:#fff3e0,stroke:#ef6c00,stroke-width:1.5px
     style UC6 fill:#fbe9e7,stroke:#d84315,stroke-width:1.5px
     style UC7 fill:#eceff1,stroke:#546e7a,stroke-width:1.5px
+=======
+    Approver --> UC2
+    Approver --> UC5
+    Approver --> UC6
+
+    classDef actor fill:#fff,stroke:#334155,stroke-width:2px,color:#0f172a
+    classDef query fill:#e0f2fe,stroke:#0284c7,color:#0c4a6e
+    classDef command fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef approval fill:#ffedd5,stroke:#ea580c,color:#7c2d12
+    classDef cancel fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    class User,Approver actor
+    class UC2 query
+    class UC1,UC3 command
+    class UC4 cancel
+    class UC5,UC6 approval
+    style System fill:#f8fafc,stroke:#475569,stroke-width:2px
+>>>>>>> Stashed changes

@@ -20,6 +20,7 @@ GitHub Issues establish the tracking history, but an issue being closed does not
 
 ## C06 assessment audit
 
+<<<<<<< Updated upstream
 ### F1 — Confirm Reservation preconditions were violated in production code
 
 - Claim ID & Requirement: `F1` / OP-03 Confirm Reservation, REQ-03 and Preconditions in `docs/specification/operations/03-confirm-reservation/OP-03-confirm-reservation.md`; `ReservationService.confirmReservation` must reject inactive vehicles and past-start reservations.
@@ -141,3 +142,33 @@ Use consistent IDs across all project documents: `R-01`..`R-05`.
 - Accepted and corrected F2: `ReservationService` now delegates rule evaluation to `ReservationRules` and throws `ConflictOverlapException` on overlap, matching the H2/H1 design.
 - F3 documentation gap: refined rather than rejected; GitHub tracking is now credited separately from repository evidence, and remaining C03 Part B/C05 gaps are explicitly recorded.
 - Automated verification: `./mvnw.cmd test` exited successfully with code `0`.
+=======
+We confirm that Dockerized PostgreSQL with Spring Data JPA satisfies our persistence requirements. We will proceed with this baseline stack for the CP1 walking skeleton without introducing extra database migration tooling until needed.
+
+## C03 — Architecture Evidence
+
+### Decision record and diagram set
+
+- ADR: [ADR-001: Notification Isolation](decisions/ADR-001-notification-isolation.md)
+- Context diagram: [context-diagram.mmd](specification/diagrams/context-diagram.mmd)
+- Static architecture: [static-architecture.mmd](specification/diagrams/static-architecture.mmd)
+- Deployment diagram: [deployment-diagram.mmd](specification/diagrams/deployment-diagram.mmd)
+- Sequence diagram: [design-sequence.mmd](specification/diagrams/design-sequence.mmd)
+- Class diagram: [design-class.mmd](specification/diagrams/design-class.mmd)
+
+### AS-IS -> TO-BE change matrix (CHANGE / KEEP / VERIFY)
+
+| Area | AS-IS | TO-BE | Status |
+| --- | --- | --- | --- |
+| Reservation state transitions | service mutated `state` directly and exposed a public setter on the entity | domain methods encapsulate business transitions (`confirm`, `requestApproval`, `reject`, `cancel`, `expire`) | CHANGE |
+| Notification coupling | feature package depended on concrete notification implementation | feature package depends on `ReservationNotifier` abstraction; implementation lives in integration layer | CHANGE |
+| Package dependency rule | no explicit architecture guard | ArchUnit enforces no dependency from `feature.reservation` to `integration.notification` | VERIFY |
+| Domain entity behavior | entity was anemic data holder with Lombok `@Data` | entity owns lifecycle state transitions through business methods | CHANGE |
+| Application layering | existing architecture already followed MVC/service/repository flow | preserved and made explicit with dependency inversion at notification boundary | KEEP |
+
+### Result of the architecture verification
+
+The ArchUnit rule was executed as part of the project test suite. It verifies that no class in `cz.vsb.autarepo.autorepo.feature.reservation..` depends on any class in `cz.vsb.autarepo.autorepo.integration.notification..`.
+
+Current verification result: the project passes the C03 architecture check after the refactor; the rule is enforced by `ArchitectureRuleTest` and the added `archunit` test dependency in `pom.xml`.
+>>>>>>> Stashed changes

@@ -28,15 +28,20 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final VehicleService vehicleService;
     private final UserService userService;
+<<<<<<< Updated upstream
     private final NotificationServiceStub notificationService;
     private final Clock clock;
     private final ReservationRules reservationRules;
+=======
+    private final ReservationNotifier reservationNotifier;
+>>>>>>> Stashed changes
 
     @Autowired
     public ReservationService(Clock clock,
                               ReservationRepository reservationRepository,
                               VehicleService vehicleService,
                               UserService userService,
+<<<<<<< Updated upstream
                               NotificationServiceStub notificationService) {
         this(clock, reservationRepository, vehicleService, userService, notificationService, new ReservationRules());
     }
@@ -61,6 +66,13 @@ public class ReservationService {
                               NotificationServiceStub notificationService,
                               Clock clock) {
         this(clock, reservationRepository, vehicleService, userService, notificationService);
+=======
+                              ReservationNotifier notificationService) {
+        this.reservationRepository = reservationRepository;
+        this.vehicleService = vehicleService;
+        this.userService = userService;
+        this.reservationNotifier = notificationService;
+>>>>>>> Stashed changes
     }
 
     public List<Reservation> findAll() {
@@ -120,11 +132,27 @@ public class ReservationService {
         if (!vehicle.isActive()) {
             throw new IllegalStateException("RESOURCE_INACTIVE");
         }
+<<<<<<< Updated upstream
         if (!now.isBefore(reservation.getStartTime())) {
             throw new IllegalStateException("START_MUST_BE_FUTURE");
         }
 
         ensureNoBlockingConflict(reservation.getVehicle().getId(), reservation.getStartTime(), reservation.getEndTime(), reservation.getId());
+=======
+
+        if (reservation.getVehicle().isRequiresApproval()) {
+            reservation.requestApproval();
+            return reservationRepository.save(reservation);
+        }
+
+        boolean hasConflict = reservationRepository
+                .existsByVehicleIdAndStateAndStartTimeLessThanAndEndTimeGreaterThan(
+                        reservation.getVehicle().getId(),
+                        ReservationState.CONFIRMED,
+                        reservation.getEndTime(),
+                        reservation.getStartTime()
+                );
+>>>>>>> Stashed changes
 
         if (vehicle.isRequiresApproval()) {
             reservation.requestApproval(now);
@@ -134,6 +162,7 @@ public class ReservationService {
             return saved;
         }
 
+<<<<<<< Updated upstream
         reservation.confirm(now);
         Reservation saved = reservationRepository.save(reservation);
         reservationRepository.flush();
@@ -145,18 +174,39 @@ public class ReservationService {
     public Reservation approveReservation(Long id) {
         Reservation reservation = findById(id);
         LocalDateTime now = now();
+=======
+        reservation.confirm();
+        Reservation confirmed = reservationRepository.save(reservation);
+        reservationNotifier.sendConfirmation(confirmed);
+        return confirmed;
+    }
+
+    public Reservation approveReservation(Long reservationId) {
+        Reservation reservation = findById(reservationId);
+
+>>>>>>> Stashed changes
         if (reservation.getState() != ReservationState.PENDING_APPROVAL) {
             throw new IllegalStateException("INVALID_STATE_TRANSITION");
         }
 
+<<<<<<< Updated upstream
         if (reservationRules.shouldExpire(reservation.getState(), now, reservation.getReviewDeadline(), reservation.getStartTime())) {
             reservation.expire(now);
+=======
+        if (!reservation.getVehicle().isActive()) {
+            throw new IllegalStateException("RESOURCE_INACTIVE");
+        }
+
+        if (!LocalDateTime.now().isBefore(reservation.getStartTime())) {
+            reservation.expire();
+>>>>>>> Stashed changes
             reservationRepository.save(reservation);
             reservationRepository.flush();
             notificationService.notifyReservationExpired(reservation);
             throw new ApprovalWindowExpiredException("APPROVAL_WINDOW_EXPIRED");
         }
 
+<<<<<<< Updated upstream
         Vehicle vehicle = vehicleService.findByIdForUpdate(reservation.getVehicle().getId());
         reservation.setVehicle(vehicle);
         ensureNoBlockingConflict(reservation.getVehicle().getId(), reservation.getStartTime(), reservation.getEndTime(), reservation.getId());
@@ -179,6 +229,35 @@ public class ReservationService {
         reservationRepository.flush();
         notificationService.notifyReservationRejected(saved);
         return saved;
+=======
+        boolean hasConflict = reservationRepository
+                .existsByVehicleIdAndStateAndStartTimeLessThanAndEndTimeGreaterThan(
+                        reservation.getVehicle().getId(),
+                        ReservationState.CONFIRMED,
+                        reservation.getEndTime(),
+                        reservation.getStartTime()
+                );
+
+        if (hasConflict) {
+            throw new IllegalStateException("CONFLICT_OVERLAP");
+        }
+
+        reservation.confirm();
+        Reservation confirmed = reservationRepository.save(reservation);
+        reservationNotifier.sendConfirmation(confirmed);
+        return confirmed;
+    }
+
+    public Reservation rejectReservation(Long reservationId) {
+        Reservation reservation = findById(reservationId);
+
+        if (reservation.getState() != ReservationState.PENDING_APPROVAL) {
+            throw new IllegalStateException("INVALID_STATE_TRANSITION");
+        }
+
+        reservation.reject();
+        return reservationRepository.save(reservation);
+>>>>>>> Stashed changes
     }
 
     @Transactional
@@ -189,6 +268,7 @@ public class ReservationService {
         if (reservation.getState() == ReservationState.CANCELLED) {
             throw new IllegalStateException("ALREADY_CANCELLED");
         }
+<<<<<<< Updated upstream
         if (!reservationRules.canCancel(reservation.getState(), now, reservation.getStartTime())) {
             if (!now.isBefore(reservation.getStartTime())) {
                 throw new CancellationWindowClosedException("CANCELLATION_WINDOW_CLOSED");
@@ -201,6 +281,21 @@ public class ReservationService {
         reservationRepository.flush();
         notificationService.notifyReservationCancelled(saved);
         return saved;
+=======
+
+        if (reservation.getState() != ReservationState.DRAFT
+                && reservation.getState() != ReservationState.PENDING_APPROVAL
+                && reservation.getState() != ReservationState.CONFIRMED) {
+            throw new IllegalStateException("INVALID_STATE_TRANSITION");
+        }
+
+        if (!LocalDateTime.now().isBefore(reservation.getStartTime())) {
+            throw new IllegalStateException("CANCELLATION_WINDOW_CLOSED");
+        }
+
+        reservation.cancel();
+        return reservationRepository.save(reservation);
+>>>>>>> Stashed changes
     }
 
     @Transactional

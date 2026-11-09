@@ -1,12 +1,38 @@
+%%{init: {"theme": "base", "state": {"useMaxWidth": true}}}%%
 stateDiagram-v2
-    [*] --> DRAFT : OP-01: Create Reservation\n[Valid interval & resource exists]
+    direction LR
+
+    [*] --> DRAFT : OP-01 create
+
+    state "Draft" as DRAFT
+    state "Pending approval" as PENDING_APPROVAL
+    state "Confirmed" as CONFIRMED
+    state "Rejected" as REJECTED
+    state "Cancelled" as CANCELLED
+    state "Expired" as EXPIRED
+
+    DRAFT --> CONFIRMED : OP-03 confirm\nstandard + active + no overlap
+    DRAFT --> PENDING_APPROVAL : OP-03 request approval\nrequiresApproval = true
+
+    PENDING_APPROVAL --> CONFIRMED : OP-05 approve\nbefore start + no overlap
+    PENDING_APPROVAL --> REJECTED : OP-06 reject
+    PENDING_APPROVAL --> EXPIRED : timeout\ncurrentTime >= start
+
+    DRAFT --> CANCELLED : OP-04 cancel\nbefore start
+    PENDING_APPROVAL --> CANCELLED : OP-04 cancel\nbefore start
+    CONFIRMED --> CANCELLED : OP-04 cancel\nbefore start
+
+    CONFIRMED --> [*]
+    REJECTED --> [*]
+    CANCELLED --> [*]
+    EXPIRED --> [*]
 
     note right of DRAFT
-        - Intent recorded
-        - Resource NOT locked
-        - Zero impact on OP-02 Availability
+        Intent recorded.
+        Vehicle is not locked.
     end note
 
+<<<<<<< Updated upstream:docs/specification/diagrams/state-diagram.mmd
     DRAFT --> CONFIRMED : OP-03: Confirm Reservation\n[!resource.isLuxury & active & no conflict]
     DRAFT --> PENDING_APPROVAL : OP-03: Confirm Reservation\n[resource.isLuxury & active & no conflict]
 
@@ -37,3 +63,9 @@ stateDiagram-v2
     CANCELLED --> [*]
     REJECTED --> [*]
     EXPIRED --> [*]
+=======
+    note right of CONFIRMED
+        Binding allocation.
+        Blocks overlapping availability.
+    end note
+>>>>>>> Stashed changes:docs/specification/diagrams/reservation-lifecycle-statechart-diagram.mmd

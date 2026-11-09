@@ -13,12 +13,17 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
+<<<<<<< Updated upstream
 @Table(name = "reservations", indexes = {
         @Index(name = "idx_reservation_vehicle_state", columnList = "vehicle_id, state"),
         @Index(name = "idx_reservation_range", columnList = "vehicle_id, start_time, end_time")
 })
 @Getter
 @Setter
+=======
+@Table(name = "reservations")
+@Getter
+>>>>>>> Stashed changes
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -48,6 +53,7 @@ public class Reservation {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+<<<<<<< Updated upstream
     @Column
     private LocalDateTime submittedAt;
 
@@ -163,3 +169,25 @@ public class Reservation {
         }
     }
 }
+=======
+    public void confirm() {
+        this.state = ReservationState.CONFIRMED;
+    }
+
+    public void requestApproval() {
+        this.state = ReservationState.PENDING_APPROVAL;
+    }
+
+    public void reject() {
+        this.state = ReservationState.REJECTED;
+    }
+
+    public void cancel() {
+        this.state = ReservationState.CANCELLED;
+    }
+
+    public void expire() {
+        this.state = ReservationState.EXPIRED;
+    }
+}
+>>>>>>> Stashed changes
