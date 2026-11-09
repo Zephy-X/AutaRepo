@@ -1,5 +1,8 @@
 # Technical Defense Brief — Confirm Reservation
 
+**Current reporting commit:** `1012afad99641aac84f8fb674f77d1532ccb991d` (`feat: add C07 (#14)`)
+**Verification update:** the full Maven test suite passes when Docker Compose is running, including PostgreSQL-backed persistence checks.
+
 ## 1) Scope & invariant
 
 We defend the `OP-03 Confirm Reservation` path and the core invariant `BR-02`: two blocking reservations for the same vehicle must never overlap.
@@ -16,7 +19,7 @@ We defend the `OP-03 Confirm Reservation` path and the core invariant `BR-02`: t
 - `ReservationViewController` triggers commands into the service layer.
 - `ReservationService` owns confirmation, approval, rejection, expiration, and cancellation decisions.
 - `ReservationRepository` exposes a conflict query (`hasStateConflict`) and persists state.
-- `VehicleService.findByIdForUpdate` obtains the lock needed for contention control.
+- `VehicleService.findByIdForUpdate` obtains the vehicle row lock used by the current contention-control design.
 - `NotificationServiceStub` emits post-commit side effects only after state mutation.
 
 ### TO-BE (current working design)
@@ -25,6 +28,11 @@ We defend the `OP-03 Confirm Reservation` path and the core invariant `BR-02`: t
 - `Reservation` aggregate enforces local invariants for state and resource activity.
 - `ReservationRepository` remains the persistence boundary with the overlap query.
 - Scheduler reuses the same lifecycle service for expiration (`expireStaleReservations`).
+
+The current implementation is functionally verified on the local Docker/PostgreSQL
+environment, but the concurrency claim is not yet fully evidenced: there is no
+dedicated parallel-confirm stress test that demonstrates the outcome under
+simultaneous PostgreSQL transactions.
 
 ### Ownership boundary
 
@@ -102,6 +110,24 @@ Result:
 - exit code `0`
 - 12 targeted tests pass, validating the request/approval/expiration/cancel paths and the new guard conditions.
 
+### Full repository test suite with Docker/PostgreSQL
+
+Command:
+
+`./mvnw.cmd -q test`
+
+Environment and result:
+
+- Docker Compose was running with `local_postgres` healthy on port `5432`.
+- The PostgreSQL persistence test connected to PostgreSQL `16.15` and Hibernate selected `PostgreSQLDialect`.
+- The full Maven test suite exited with code `0`.
+- The earlier dialect/metadata failure was environmental: the PostgreSQL container was stopped.
+
+This result proves the repository's current integration path works with the
+required database available. It does not by itself prove a race-free outcome
+for two simultaneous confirmation transactions, nor does it replace a
+dedicated runtime scheduler-expiration test.
+
 ## 5) C06 finding defense
 
 ### Accepted finding
@@ -118,4 +144,8 @@ Result:
 
 ## Closing statement
 
-The implementation now meets the invariant required by `OP-03`: no inactive or already-started resource can be confirmed, and no conflicting blocking reservation enters the system without the overlap guard. This is the technical basis for the defense.
+The implementation now enforces the `OP-03` guards and overlap decision path,
+and the complete test suite passes with PostgreSQL running in Docker. The
+remaining AMBER items are evidence gaps, not the previously accepted C06
+defects: dedicated PostgreSQL contention proof, scheduler-driven expiration
+proof, and clean-environment reproducibility.
