@@ -7,6 +7,17 @@
 
 This repository snapshot is the same commit evaluated during the C06 external assessment; the reporting state below is therefore aligned to the same baseline and the current working tree for the corrective changes.
 
+## C02/C03/C05 evidence index
+
+GitHub Issues establish the tracking history, but an issue being closed does not by itself prove that every mandatory output was produced. The table below separates repository artifacts, tracking records, implementation commits, and verification evidence. No repository tag for these deliverables was found; exact commit and pull-request links are therefore used instead.
+
+| Course / deliverable | Requirement or output | Evidence type | Exact evidence | Status | Notes / remaining gap |
+|---|---|---|---|---|---|
+| C02 | Baseline v0.2 approval-workflow change, affected slices, rules, verification examples | Repository document; issue; PR; commit | [`docs/baseline-v0.2-change-record.md`](baseline-v0.2-change-record.md); [Issue #6](https://github.com/Zephy-X/AutaRepo/issues/6); [PR #7](https://github.com/Zephy-X/AutaRepo/pull/7); [commit `70f0d33`](https://github.com/Zephy-X/AutaRepo/commit/70f0d33d20c7fd231d27b79fd8e175247d3c9049) | VERIFIED | The baseline record contains the change impact and executed verification examples. No separate repository tag was found. |
+| C03 Part A | AS-IS mapping of one scenario, implementation elements, state/rules, dependencies, structural evidence | Repository directory; issue; PR; commit | [`docs/specification/C03/`](specification/C03/); [Issue #8](https://github.com/Zephy-X/AutaRepo/issues/8); [PR #9](https://github.com/Zephy-X/AutaRepo/pull/9); [commit `de27a59`](https://github.com/Zephy-X/AutaRepo/commit/de27a59c6395e2625ceb4a4b7d6be4cc58241b27) | VERIFIED | The C03 Part A artifact set is present and linked to its tracking issue and merged PR. |
+| C03 Part B / architecture | Architecture drivers, domain model, views, runtime verification, and design-to-code delta | Repository document; issue; PR; commit | [`docs/specification/C04/part-2.md`](specification/C04/part-2.md); [Issue #12](https://github.com/Zephy-X/AutaRepo/issues/12); [PR #11](https://github.com/Zephy-X/AutaRepo/pull/11); [commit `1e22e48`](https://github.com/Zephy-X/AutaRepo/commit/1e22e4840f4474d62b8f7716acde577b7fdb03aa) | PARTLY VERIFIED | The document is headed “C03 — Architecture Evidence” but is stored under `C04`; the issue requested centralization in this evidence file, which was not previously true. |
+| C05 | Detailed design of the reservation lifecycle, contracts, responsibilities, structural/dynamic design, and test derivation | Repository document; issue; PR; implementation/test claim | [`docs/architecture-and-decisions.md#c05-detailed-design`](architecture-and-decisions.md#c05-detailed-design); [Issue #13](https://github.com/Zephy-X/AutaRepo/issues/13); [PR #11](https://github.com/Zephy-X/AutaRepo/pull/11) | PARTLY VERIFIED | The C05 design section and tracking records exist, and PR #11 claims unit and PostgreSQL verification. A separate C05 evidence index and independently reproduced test record were not identifiable before this correction. |
+
 ## C06 assessment audit
 
 ### F1 — Confirm Reservation preconditions were violated in production code
@@ -37,16 +48,18 @@ This repository snapshot is the same commit evaluated during the C06 external as
   - Verification command: `./mvnw.cmd test`
   - Result: exit code `0`; the full Java test suite passed, including the corrected overlap assertion and the layout of the reservation lifecycle checks.
 
-### F3 — Missing evidence and release markers were a real documentation gap
+### F3 — Evidence traceability was incomplete and the original claim was overbroad
 
-- Claim ID & Requirement: `F3` / C02, C03, and C05 evidence obligations in the assessment form and `docs/evidence-and-evolution.md`.
+- Claim ID & Requirement: `F3` / traceability of C02, C03, and C05 mandatory outputs in the assessment form and project evidence.
 - Reviewer Note: expected explicit evidence sections and exact commit/tag records for C02/C03/C05.
 - Our Verification: `VERIFIED FINDING`
-- Disposition: `ACCEPT`
+- Disposition: `PARTLY ACCEPTED / CLAIM REFINED`
 - Evidence & Resolution:
-  - The original file `docs/evidence-and-evolution.md` contained only the C01 spike and partial C05 notes; there were no C02/C03 sections and no explicit baseline/reporting commit record.
-  - `docs/specification/C04/part-2.md` still had placeholder strings at `...:417` and `...:455`.
-  - Fix: populated the baseline/reporting identifiers, added the C06 finding audit, and replaced the placeholder commit/tag strings with the verified baseline value `cd1f93c341afadab1c5176b5303bf100fb8eea7b` in `docs/specification/C04/part-2.md`.
+  - GitHub Issues prove that C02, C03, and C05 work was tracked: [#6](https://github.com/Zephy-X/AutaRepo/issues/6), [#8](https://github.com/Zephy-X/AutaRepo/issues/8), [#12](https://github.com/Zephy-X/AutaRepo/issues/12), and [#13](https://github.com/Zephy-X/AutaRepo/issues/13). Their linked PRs and commits provide additional traceability.
+  - Issue tracking alone does not establish that every mandatory output was produced or independently verified.
+  - Existing evidence is distributed across `docs/baseline-v0.2-change-record.md`, `docs/specification/C03/`, `docs/specification/C04/part-2.md`, `docs/architecture-and-decisions.md`, and the linked GitHub records.
+  - The original finding therefore remains valid as a traceability/documentation gap, but the statement that C02/C03/C05 evidence was simply missing was too broad. C02 and C03 Part A are verified; C03 Part B and C05 remain partly verified because of naming, centralization, and independent-verification gaps.
+  - Fix: added the evidence index above and the equivalent Czech index, with exact paths, URLs, commits, statuses, and remaining gaps. No repository tag for these deliverables was found.
 
 ### Supplementary PARTLY items reviewed and dispositioned
 
@@ -126,5 +139,5 @@ Use consistent IDs across all project documents: `R-01`..`R-05`.
 
 - Verified fix for F1: `Resource inactive` and `start time already reached` now fail before state transition.
 - Accepted and corrected F2: `ReservationService` now delegates rule evaluation to `ReservationRules` and throws `ConflictOverlapException` on overlap, matching the H2/H1 design.
-- Documentation gap F3: closed by adding the evidence audit and baseline commit markers.
+- F3 documentation gap: refined rather than rejected; GitHub tracking is now credited separately from repository evidence, and remaining C03 Part B/C05 gaps are explicitly recorded.
 - Automated verification: `./mvnw.cmd test` exited successfully with code `0`.
