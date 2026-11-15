@@ -185,7 +185,35 @@ Inspected at `c8db481`: `ReservationRules.java`, `Reservation.java`, `Reservatio
 
 - **Peer reviewer:** Adam Murcko
 - **Review:** `TODO`
+### Peer review — Adam Murcko, 2026-11-16
 
+**Reviewed:** `CR-08` Change Card and `DEF-C08-01` in `docs/intent-and-change.md` at commit `<14d4fdd>`.
+
+**What I checked:**
+- Read `ReservationRules.canCancel`, `Reservation.cancel`, and `ReservationService.cancelReservation` to confirm that the documented impact rows reflect the current implementation.
+- Ran `./mvnw -B test -Dtest=ReservationC08BaselineIntegrationTest` on H2: 3 tests passed and 1 was skipped. Ran `TC-C08-04` with the test enabled: it failed with `"expected EXPIRED but was PENDING_APPROVAL"`, matching the documented observation.
+- Reviewed `list.html` and confirmed that the Cancel button currently uses `#temporals.createNow()`.
+
+**Assumption 1 (cut-off = 2 h, aligned with the lead time):** Agree, with one clarification. A `CONFIRMED` reservation cannot be cancelled at or after the exact two-hour cut-off before its start time. I accept this because a reservation can still be cancelled while it is in `DRAFT`. However, the confirmation message must warn the user about this restriction. I am making this a required C09 item, not an optional improvement.
+
+**Assumption 2 (`PENDING_APPROVAL` excluded):** Agree. The vehicle has not yet been prepared before approval, and pending reservations already have their own BR-06 expiry deadline.
+
+**Assumption 3 (separate error code):** Partially disagree. A new error code is appropriate, but a new exception class is unnecessary. We already have `CancellationWindowClosedException`; it should be reused with the new code `CANCELLATION_CUTOFF_REACHED`. This keeps `ReservationViewController.handleAction` and `GlobalExceptionHandler` unchanged and results in a smaller delta.
+
+**Additional finding — medium:** The impact matrix does not mention the seeded `CONFIRMED` reservation in `DataInitializer`. It starts three days in the future, so it is not affected by the new cut-off. However, anyone demonstrating the cut-off will not have seeded data within the two-hour window. C09 should add a demonstration step or suitable test data. This does not block the decision.
+
+**Additional finding — low:** `AC-02` states that the interval remains `UNAVAILABLE`, but no test currently verifies `OP-02` after a rejected cancellation. The new C09 test should include this assertion.
+
+**Verdict:** APPROVE Option A, subject to the following changes:
+
+- **C09-R1:** Make the warning during confirmation mandatory, based on Assumption 1.
+- **C09-R2:** Reuse `CancellationWindowClosedException`, based on Assumption 3, and update the Option A row and bounded delta accordingly.
+- **C09-R3:** Verify `OP-02` after a rejected cancellation.
+- Move the demo-data finding to the C09 backlog.
+
+**DEF-C08-01:** Agree that this is a separate fix. I prefer `@Transactional(noRollbackFor = ApprovalWindowExpiredException.class)` as the smallest persistence change. The expiration notification must nevertheless be dispatched only after the transaction commits.
+
+Signed: Adam Murcko, 2026-11-15
 ### Decision
 
 - **Decision:** **ACCEPT — Option A**. **Owner:** Radim Pukalík. **Date:** 2026-11-15.

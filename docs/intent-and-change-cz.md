@@ -182,6 +182,35 @@ Od AC-02 → vlastník rozhodnutí (`ReservationRules.canCancel`, volaný z `Res
 
 - **Recenzent:** Adam Murcko
 - **Review:** `TODO`
+- ### Peer review — Adam Murcko, 2026-11-16
+
+**Kontrolováno:** Change Card `CR-08` a `DEF-C08-01` v souboru `docs/intent-and-change.md` na commitu `<14d4fdd>`.
+
+**Co jsem ověřil:**
+- Prošel jsem `ReservationRules.canCancel`, `Reservation.cancel` a `ReservationService.cancelReservation`, abych ověřil, že zdokumentované dopady odpovídají aktuální implementaci.
+- Spustil jsem `./mvnw -B test -Dtest=ReservationC08BaselineIntegrationTest` nad H2: 3 testy prošly a 1 byl přeskočen. Po povolení `TC-C08-04` test selhal s chybou `"expected EXPIRED but was PENDING_APPROVAL"`, což odpovídá zdokumentovanému pozorování.
+- Zkontroloval jsem `list.html` a potvrdil, že tlačítko Cancel aktuálně používá `#temporals.createNow()`.
+
+**Předpoklad 1 (limit = 2 hodiny, shodně s minimální dobou předem):** Souhlasím s jedním upřesněním. Rezervaci ve stavu `CONFIRMED` nelze zrušit v okamžiku přesně dvě hodiny před začátkem ani později. Tento limit akceptuji, protože rezervaci lze stále zrušit ve stavu `DRAFT`. Potvrzovací zpráva však musí uživatele na toto omezení upozornit. Považuji to za povinný úkol pro C09, nikoli za volitelné vylepšení.
+
+**Předpoklad 2 (`PENDING_APPROVAL` je vyloučen):** Souhlasím. Vozidlo ještě není před schválením připraveno a rezervace čekající na schválení již mají vlastní lhůtu vypršení podle BR-06.
+
+**Předpoklad 3 (samostatný kód chyby):** Částečně nesouhlasím. Nový kód chyby je vhodný, ale nová třída výjimky není nutná. Již existující `CancellationWindowClosedException` lze znovu použít s novým kódem `CANCELLATION_CUTOFF_REACHED`. Díky tomu není nutné měnit `ReservationViewController.handleAction` ani `GlobalExceptionHandler` a výsledná změna bude menší.
+
+**Dodatečné zjištění — střední závažnost:** Matice dopadů nezmiňuje předpřipravenou rezervaci ve stavu `CONFIRMED` v `DataInitializer`. Začíná za tři dny, takže novým limitem není ovlivněna. Při demonstraci limitu však nebude k dispozici předpřipravená rezervace v rámci dvouhodinového okna. C09 by proto měl přidat demonstrační krok nebo vhodná testovací data. Toto zjištění nebrání schválení rozhodnutí.
+
+**Dodatečné zjištění — nízká závažnost:** `AC-02` uvádí, že interval zůstává `UNAVAILABLE`, ale žádný test aktuálně neověřuje `OP-02` po zamítnutí zrušení. Nový test v C09 by měl toto ověření obsahovat.
+
+**Verdikt:** SCHVALUJI variantu A s následujícími změnami:
+
+- **C09-R1:** Upozornění při potvrzení rezervace musí být povinné podle předpokladu 1.
+- **C09-R2:** Znovu použít `CancellationWindowClosedException` podle předpokladu 3 a odpovídajícím způsobem aktualizovat řádek varianty A i omezený rozsah změn.
+- **C09-R3:** Ověřit stav `OP-02` po zamítnutém zrušení.
+- Zjištění týkající se demonstračních dat přesunout do backlogu pro C09.
+
+**DEF-C08-01:** Souhlasím, že jde o samostatnou opravu. Preferuji `@Transactional(noRollbackFor = ApprovalWindowExpiredException.class)` jako nejmenší změnu zajišťující zachování stavu v databázi. Notifikace o vypršení však musí být odeslána až po úspěšném commitu transakce.
+
+Podepsán: Adam Murcko, 2026-11-15
 
 ### Rozhodnutí
 
