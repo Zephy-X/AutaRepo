@@ -1,8 +1,7 @@
-%%{init: {"theme": "base", "state": {"useMaxWidth": true}}}%%
 stateDiagram-v2
     direction LR
 
-    [*] --> DRAFT : OP-01 create
+    [*] --> DRAFT : OP-01 create\nvalid interval + resource exists
 
     state "Draft" as DRAFT
     state "Pending approval" as PENDING_APPROVAL
@@ -11,12 +10,12 @@ stateDiagram-v2
     state "Cancelled" as CANCELLED
     state "Expired" as EXPIRED
 
-    DRAFT --> CONFIRMED : OP-03 confirm\nstandard + active + no overlap
-    DRAFT --> PENDING_APPROVAL : OP-03 request approval\nrequiresApproval = true
+    DRAFT --> CONFIRMED : OP-03 confirm\nstandard + active + future start + no overlap
+    DRAFT --> PENDING_APPROVAL : OP-03 request approval\nrequiresApproval + active + future start
 
-    PENDING_APPROVAL --> CONFIRMED : OP-05 approve\nbefore start + no overlap
+    PENDING_APPROVAL --> CONFIRMED : OP-05 approve\nbefore reviewDeadline + no overlap
     PENDING_APPROVAL --> REJECTED : OP-06 reject
-    PENDING_APPROVAL --> EXPIRED : timeout\ncurrentTime >= start
+    PENDING_APPROVAL --> EXPIRED : OP-07 expire\nnow >= reviewDeadline OR now >= start
 
     DRAFT --> CANCELLED : OP-04 cancel\nbefore start
     PENDING_APPROVAL --> CANCELLED : OP-04 cancel\nbefore start
@@ -32,40 +31,13 @@ stateDiagram-v2
         Vehicle is not locked.
     end note
 
-<<<<<<< Updated upstream:docs/specification/diagrams/state-diagram.mmd
-    DRAFT --> CONFIRMED : OP-03: Confirm Reservation\n[!resource.isLuxury & active & no conflict]
-    DRAFT --> PENDING_APPROVAL : OP-03: Confirm Reservation\n[resource.isLuxury & active & no conflict]
-
     note right of PENDING_APPROVAL
-        - Soft-lock placed on slot
-        - Blocks availability under BR-02
-        - Awaiting Approver decision
+        Soft lock on the slot.
+        Blocks availability (BR-02).
+        Awaiting approver decision.
     end note
 
-    PENDING_APPROVAL --> CONFIRMED : OP-05: Approve Reservation\n[Approver & currentTime < start]
-    PENDING_APPROVAL --> REJECTED : OP-06: Reject Reservation\n[Approver rejects request]
-    PENDING_APPROVAL --> EXPIRED : OP-07: Expire Pending Reservation\n[currentTime >= reviewDeadline OR currentTime >= start]
-
-    note right of CONFIRMED
-        - Binding hard-allocation locked
-        - Blocks availability under BR-02
-    end note
-
-    DRAFT --> CANCELLED : OP-04: Cancel Reservation\n[currentTime < start]
-    PENDING_APPROVAL --> CANCELLED : OP-04: Cancel Reservation\n[currentTime < start]
-    CONFIRMED --> CANCELLED : OP-04: Cancel Reservation\n[currentTime < start]
-
-    note right of CANCELLED
-        - Allocation / hold released
-        - Terminal state
-    end note
-
-    CANCELLED --> [*]
-    REJECTED --> [*]
-    EXPIRED --> [*]
-=======
     note right of CONFIRMED
         Binding allocation.
-        Blocks overlapping availability.
+        Blocks overlapping availability (BR-02).
     end note
->>>>>>> Stashed changes:docs/specification/diagrams/reservation-lifecycle-statechart-diagram.mmd

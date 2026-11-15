@@ -1,0 +1,72 @@
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+10:49:56.696 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration cz.vsb.autarepo.autorepo.AutoRepoApplication for test class cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+10:49:56.783 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration cz.vsb.autarepo.autorepo.AutoRepoApplication for test class cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v4.1.1)
+
+2026-11-15T10:49:57.127+01:00  INFO 21540 --- [           main] .r.ReservationC08BaselineIntegrationTest : Starting ReservationC08BaselineIntegrationTest using Java 26.0.2.1 with PID 21540 (started by radim in C:\Users\radim\Desktop\autorepo\AutaRepo)
+2026-11-15T10:49:57.129+01:00  INFO 21540 --- [           main] .r.ReservationC08BaselineIntegrationTest : The following 1 profile is active: "test"
+2026-11-15T10:49:57.667+01:00  INFO 21540 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-11-15T10:49:57.706+01:00  INFO 21540 --- [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 32 ms. Found 3 JPA repository interfaces.
+2026-11-15T10:49:58.215+01:00  INFO 21540 --- [           main] org.hibernate.orm.jpa                    : HHH008540: Processing PersistenceUnitInfo [name: default]
+2026-11-15T10:49:58.263+01:00  INFO 21540 --- [           main] org.hibernate.orm.core                   : HHH000001: Hibernate ORM core version 7.4.5.Final
+2026-11-15T10:49:58.667+01:00  INFO 21540 --- [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-11-15T10:49:58.692+01:00  INFO 21540 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-11-15T10:49:58.836+01:00  INFO 21540 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:c08baseline user=SA
+2026-11-15T10:49:58.837+01:00  INFO 21540 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-11-15T10:49:58.855+01:00  WARN 21540 --- [           main] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-11-15T10:49:58.875+01:00  INFO 21540 --- [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [jdbc:h2:mem:c08baseline]
+	Database driver: H2 JDBC Driver
+	Database dialect: H2Dialect
+	Database version: 2.4.240
+	Default catalog/schema: c08baseline/PUBLIC
+	Autocommit mode: undefined/unknown
+	Isolation level: READ_COMMITTED [default READ_COMMITTED]
+	JDBC fetch size: 100
+	Pool: DataSourceConnectionProvider
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-11-15T10:49:59.753+01:00  INFO 21540 --- [           main] org.hibernate.orm.core                   : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-11-15T10:49:59.807+01:00  INFO 21540 --- [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-11-15T10:49:59.894+01:00  INFO 21540 --- [           main] o.s.d.j.r.query.QueryEnhancerFactories   : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-11-15T10:50:00.833+01:00  WARN 21540 --- [           main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-11-15T10:50:01.286+01:00  INFO 21540 --- [           main] .r.ReservationC08BaselineIntegrationTest : Started ReservationC08BaselineIntegrationTest in 4.443 seconds (process running for 5.422)
+>>> Scheduler fired at: 2026-11-15T10:50:01.290536
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+WARNING: A Java agent has been loaded dynamically (C:\Users\radim\.m2\repository\net\bytebuddy\byte-buddy-agent\1.18.11\byte-buddy-agent-1.18.11.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+2026-11-15T10:50:01.772+01:00  INFO 21540 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 1 expired for user C08 Tester on vehicle VIN-C08-LUX
+2026-11-15T10:50:01.916+01:00  INFO 21540 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 3 confirmed for user C08 Tester on vehicle VIN-C08-R1
+2026-11-15T10:50:01.938+01:00  INFO 21540 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 4 cancelled for user C08 Tester on vehicle VIN-C08-R1
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 5.560 s <<< FAILURE! -- in cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+[ERROR] cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest.tcC0804_lateApprovalPersistsExpired -- Time elapsed: 0.532 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: 
+
+expected: EXPIRED
+ but was: PENDING_APPROVAL
+
+[INFO] 
+[INFO] Results:
+[INFO] 
+[ERROR] Failures: 
+[ERROR]   ReservationC08BaselineIntegrationTest.tcC0804_lateApprovalPersistsExpired:160 
+expected: EXPIRED
+ but was: PENDING_APPROVAL
+[INFO] 
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE

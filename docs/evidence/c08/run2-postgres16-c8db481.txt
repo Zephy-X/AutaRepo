@@ -1,0 +1,9 @@
+[INFO] Running cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+2026-11-15T10:51:28.724+01:00  INFO 24516 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@23d060c2
+	Database JDBC URL [jdbc:postgresql://localhost:5432/autorepo_c08]
+	Database version: 16.15
+2026-11-15T10:51:31.916+01:00  INFO 24516 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 2 confirmed for user C08 Tester on vehicle VIN-C08-R1
+2026-11-15T10:51:31.980+01:00  INFO 24516 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 3 cancelled for user C08 Tester on vehicle VIN-C08-R1
+[WARNING] Tests run: 4, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 6.269 s -- in cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 1
+[INFO] BUILD SUCCESS
