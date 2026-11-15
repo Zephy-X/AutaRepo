@@ -93,3 +93,132 @@ Webová rezervovací platforma pro jednotlivce a organizace, které zváží dos
 - **Kategorie**: Q (Quality / Concurrency, Contention & Temporal Consistency)
 - **Konkrétní tlak**: vysokou konkurencí a race conditions během `OP-03` potvrzení, kdy se více uživatelů pokouší potvrdit překrývající se `DRAFT` rezervace pro stejné vozidlo současně.
 - **Relevance pro náš systém**: I když soft-locking eliminuje kolize během schválení (`OP-05`), počáteční potvrzovací krok (`OP-03`) musí používat databázovou izolaci (např. serializable transakce, `SELECT ... FOR UPDATE` row locks nebo exclusion constraints na `[startTime, endTime)`) tak, aby pouze jedna současná transakce úspěšně získala vozidlo do `CONFIRMED` nebo `PENDING_APPROVAL`.
+
+---
+
+# C08 — Řízená změna
+
+> **Proč ne vzorový příklad (expirace čekajícího schválení)?** Náš baseline ho už implementuje: BR-06 / OP-07, `ReservationRules.shouldExpire`, lazy kontrola v `ReservationService.approveReservation` a `ReservationExpirationScheduler`. Znovu ho specifikovat by nebyla změna. Postup C08 proto aplikujeme na **změnu pravidla storna (CR-08)**. Krok 2 navíc odhalil skutečný defekt ve stávající cestě expirace (**DEF-C08-01**). Je zapsán zvlášť, protože jde o defekt vůči přijaté specifikaci, ne o nový požadavek.
+>
+> Testovací případy a evidence: [`evidence-and-evolution-cz.md#c08--before-baseline-a-testovací-evidence`](evidence-and-evolution-cz.md#c08--before-baseline-a-testovací-evidence). Reprodukovatelné příkazy: [`evidence-and-evolution-cz.md#c08--reprodukovatelné-testovací-příkazy`](evidence-and-evolution-cz.md#c08--reprodukovatelné-testovací-příkazy). Anglická verze je autoritativní: [`intent-and-change.md#c08--controlled-change`](intent-and-change.md#c08--controlled-change).
+
+## C08 / CR-08 — Karta řízené změny: lhůta storna potvrzených rezervací
+
+**Stav:** `ACCEPTED — varianta A` (vlastník Radim Pukalík, 2026-11-15). Peer review Adama Murcka **čeká** (viz Peer review). CR-08 je **PLANNED pro C09**: neimplementováno, neověřeno (PLANNED ≠ IMPLEMENTED ≠ VERIFIED).
+
+### Zdroj změny a konkrétní potřeba
+
+- **Zdroj:** stakeholder Fleet Manager / Approver.
+- **Potřeba:** „Když nájemce zruší potvrzené auto těsně před vyzvednutím, auto je už připravené (umyté, natankované, klíče na pultu) a nestihneme ho nabídnout nikomu jinému. Potvrzenou rezervaci nesmí jít zrušit na poslední chvíli."
+- **Cíl:** zaručit vozovému parku minimální okno pro přerozdělení před závazným (hard-lock) vyzvednutím.
+
+### Before baseline
+
+| Položka | Hodnota |
+|---|---|
+| Commit | `c8db481f5913753e2e86abb5791ebbb875e78963` (`main`, 2026-11-08) |
+| Přijatá specifikace | Baseline v0.3: **BR-03**, **OP-04** (REQ-05), statechart `state-diagram.mmd`, `business-rules-cz.md#br-03` |
+| Architektonické rozhodnutí | ADR-01 + C05: `ReservationRules` vlastní pravidla, `ReservationService` vlastní přechody |
+| Schéma | Bez verzovaných migrací. Schéma generuje Hibernate z JPA entit na `c8db481` |
+| Konfigurace | `MIN_LEAD_TIME = 2h`, `MAX_DURATION = 14d`, `REVIEW_SLA = 24h` napevno v `ReservationRules`; bean `Clock.systemUTC()`; `autorepo.expiry-interval` (default 60 000 ms) |
+
+### Předchozí pozorovatelné chování
+
+BR-03 v0.3 / REQ-05: `DRAFT`, `PENDING_APPROVAL` a `CONFIRMED` lze zrušit **právě když `currentTime < startTime`**. Potvrzenou rezervaci tedy lze zrušit minutu před vyzvednutím. Ověřeno spuštěním **TC-C08-03** (storno v `start − 1h` → `CANCELLED`).
+
+### Nové zamýšlené chování, rozsah a mimo rozsah
+
+- **Nové pravidlo (návrh BR-03 v0.4):** rezervaci ve stavu `CONFIRMED` lze zrušit **právě když `currentTime < startTime − CANCELLATION_CUTOFF`**, kde `CANCELLATION_CUTOFF = 2 h` (stejně jako `MIN_LEAD_TIME`). Pozdní pokus je odmítnut a stav zůstává `CONFIRMED`.
+- **Beze změny:** `DRAFT` a `PENDING_APPROVAL` mají dál `currentTime < startTime`.
+- **Časová sémantika:** serverový čas z injektovaného `Clock` (UTC). `startTime` je uložen jako `timestamp without time zone` a vykládá se jako UTC (R-05).
+- **Mimo rozsah:** storno poplatky, nový stav `LATE_CANCELLED`, override approverem (role neexistují), konfigurovatelná nebo per-vozidlo lhůta, scheduler, redesign UI.
+
+### Akceptační podmínky
+
+Fixní serverové hodiny, exkluzivní vozidlo R1, rezervace `B` ve stavu `CONFIRMED` se `startTime = S`.
+
+| ID | Typ | Podmínka |
+|---|---|---|
+| AC-01 | pozitivní | V `now = S − 2h − 1min` storno uspěje: commitnutý stav `CANCELLED`, OP-02 hlásí `AVAILABLE`. |
+| AC-02 | negativní | V `now = S − 1h` je storno odmítnuto **samostatným** kódem `CANCELLATION_CUTOFF_REACHED` se zprávou „Confirmed reservations cannot be cancelled less than 2 hours before start." Stav zůstává `CONFIRMED`, interval `UNAVAILABLE`. |
+| AC-03 | hranice | **Přesně** v `now = S − 2h` je storno **odmítnuto** (jako AC-02). Polootevřené okno `now < S − 2h`, konzistentní s BR-01. |
+| AC-04 | hranice | V `now = S` stále `CANCELLATION_WINDOW_CLOSED`. |
+| AC-05 | regrese | `DRAFT` a `PENDING_APPROVAL` v `now = S − 1h` lze zrušit; v `now = S` → `CANCELLATION_WINDOW_CLOSED`. |
+| AC-06 | regrese | BR-02 platí: TC-C08-01 a TC-C08-02 dávají stejné verdikty. |
+| AC-07 | regrese | Terminální stavy beze změny: re-cancel → `ALREADY_CANCELLED`; `REJECTED`/`EXPIRED` → `INVALID_STATE_TRANSITION`. |
+
+### Metoda dopadové analýzy
+
+Od AC-02 → vlastník rozhodnutí (`ReservationRules.canCancel`, volaný z `ReservationService.cancelReservation` **i** z `Reservation.cancel`/`isCancellable`) → volající v controlleru, šablonách, persistenci a testech → další zapisovatelé `state` → konfigurace, release, provoz. Zkontrolované artefakty jsou vyjmenované v anglické verzi.
+
+| Dimenze / místo | CHANGE / CHECK / NO IMPACT a proč | Akce | Vlastník / evidence |
+|---|---|---|---|
+| Specifikace BR-03, OP-04/REQ-05, flow `.mmd`, summary table (EN + CZ) | **CHANGE**: mění se pravidlo pro `CONFIRMED` | BR-03 v0.4 s AC-01..07 | Spec owner; diff v C09 PR |
+| Stavový model | **CHANGE**: guard `CONFIRMED → CANCELLED` = `[currentTime < start − 2h]`; žádný nový stav | Upravit popisek | Spec owner |
+| Architektura (ADR-01, C05) | **CHECK**: vlastník se nemění; v C05 přibude nový chybový kód u `cancelReservation(id)` | Upravit řádek kontraktu | Architekt |
+| `ReservationRules.canCancel` (statická, volá ji i entita) | **CHANGE**: konstanta `CONFIRMED_CANCELLATION_CUTOFF` + okno podle stavu | Unit kontrakt | Vývojář; `ReservationRulesTest` |
+| `Reservation.cancel` + `ReservationService.cancelReservation` (guard je **duplicitní**) | **CHANGE**: obě místa musí vracet `CANCELLATION_CUTOFF_REACHED` | Nová výjimka nebo nový kód (rozhodne C09) | Vývojář; `ReservationServiceTest` |
+| `DomainErrorMessages`, `ReservationViewController.handleAction`, `GlobalExceptionHandler` | **CHANGE**: nový kód + zpráva; novou výjimku je třeba chytat, jinak skončí na obecné 500 | Mapování + catch | Vývojář; integrační test flash zprávy |
+| UI `list.html:217-219` (`#temporals.createNow()`), `detail.html:40` | **CHANGE**: tlačítko by bylo aktivní i v lhůtě; `createNow()` používá lokální čas JVM, ne UTC `Clock` (R-05) | Povolení řídit příznakem ze služby | Vývojář; ruční UI kontrola |
+| Data / schéma | **CHECK → beze změny schématu**: pravidlo se vyhodnocuje při volání; stávající `CONFIRMED` rezervace do 2 h nebude po vydání možné zrušit (záměrně) | Release note | Release owner |
+| Další zapisovatelé `state` | Scheduler → jen `PENDING_APPROVAL` (**NO IMPACT**); `DataInitializer` neruší (**NO IMPACT**); **přímé SQL přes pgAdmin je reálný zapisovatel**. DB `CHECK` nedokáže vyjádřit pravidlo vůči `now()` | Deklarované omezení: ruční SQL jen jako auditovaná provozní činnost | Ops owner |
+| Konfigurace / CI / release | **CHECK**: lhůta napevno (A) nebo property (B); **CI pipeline neexistuje** (`docker-image.yml` odstraněn v `c8db481`) | Hodnotu zapsat do BR-03 a README; C09 clean checkout `./mvnw test` | Project lead |
+| Testy | **CHANGE**: TC-C08-03 ověřuje *staré* chování a **musí se překlopit**; `ReservationRulesTest:63` a `cancelsBeforeStartAndNotifies` zůstávají platné; nové testy AC-01..05 | Úprava TC-03 + nové orákly (očekávané výsledky) | Vývojář; běh na C09 commitu |
+| OP-01/02/03/05/06/07 | **NO IMPACT** v kódu; **CHECK** regrese | Celá sada | Vývojář |
+| Provoz / podpora | **CHECK**: pozdní storno nemá samoobslužnou cestu, řeší ho fleet manager mimo systém | Text zprávy odkáže na fleet managera | Product owner |
+
+### Alternativy
+
+| Varianta | Princip | Splňuje AC? | Přínos | Náklad / selhání / návrat | Ověření |
+|---|---|---|---|---|---|
+| **A: konstanta + guard u stávajícího vlastníka** | `CONFIRMED_CANCELLATION_CUTOFF = 2h`, `canCancel` podle stavu, kód `CANCELLATION_CUTOFF_REACHED` | Ano | Nejmenší delta, existující vzor, beze změny schématu a konfigurace | Změna hodnoty = redeploy; rollback = revert jednoho commitu | Hraniční testy s fixním `Clock` + TC-01/02 |
+| **B: totéž, lhůta jako property `autorepo.cancellation-cutoff`** | Hodnota injektovaná do `ReservationRules` | Ano | Laditelné bez změny kódu | Statická `canCancel` volaná z entity → refaktor; riziko chybné konfigurace | Jako A + test nedefaultní a neplatné hodnoty |
+| **C: beze změny kódu, jen notifikace fleet managera** | BR-03 v0.3 zůstává | **AC-02/03 ne** | Nulové riziko v kódu | Nesplňuje potřebu; notifikace je jen log stub | Ruční proces + přijetí mezery |
+| *(vyřazeno)* D: stav `LATE_CANCELLED` + poplatek | | Částečně | Flexibilita | Nový stav a ceník, mimo rozsah | n/a |
+
+**Důsledek nečinnosti:** platí BR-03 v0.3 a potvrzená auta lze rušit do poslední minuty. Jediná proveditelná odpověď bez kódu je C, a ta AC-02 nesplňuje.
+
+### Peer review
+
+- **Recenzent:** Adam Murcko
+- **Review:** `TODO`
+
+### Rozhodnutí
+
+- **Rozhodnutí:** **ACCEPT — varianta A**. **Vlastník:** Radim Pukalík. **Datum:** 2026-11-15.
+- **Zdůvodnění:** A splňuje všechna AC s nejmenší ohraničenou deltou v rámci ADR-01, nevyžaduje migraci a je plně vratná. Jediný přínos B (ladění za běhu) není požadavek a znamená refaktor. C nesplňuje AC-02.
+
+### Předání do C09 (při ACCEPT)
+
+| Položka | Obsah |
+|---|---|
+| Before | `c8db481`, BR-03 v0.3, spuštěné TC-C08-01/02/03 (PASS, H2 + PostgreSQL 16.15) |
+| Přijatá změna | storno `CONFIRMED` jen při `now < start − 2h`, jinak `CANCELLATION_CUTOFF_REACHED`, stav beze změny |
+| Ohraničená delta | `ReservationRules`, `Reservation.cancel`, `ReservationService.cancelReservation`, `DomainErrorMessages`, `ReservationViewController.handleAction`, `list.html`/`detail.html`; dokumenty BR-03, OP-04, statechart, C05 (EN + CZ) |
+| Nové orákly (očekávané výsledky) | `S−2h−1min` → `CANCELLED` + `AVAILABLE`; `S−2h` přesně → `CANCELLATION_CUTOFF_REACHED`; `S−1h` → totéž; `S` → `CANCELLATION_WINDOW_CLOSED`; `DRAFT`/`PENDING_APPROVAL` v `S−1h` → `CANCELLED` |
+| Regrese | TC-C08-01, TC-C08-02, upravený TC-C08-03, celá stávající sada |
+| Technické riziko | UI počítá povolení z jiných hodin než služba (R-05); souběh storna se schválením/potvrzením neověřen (R-01) |
+| Práce v C09 | Implementační PR, integrační běh na PostgreSQL, clean checkout, ruční UI kontrola, rozhodnutí o release |
+
+### Otevřená nejistota
+
+Adamovo peer review. Pokud napadne hodnotu lhůty 2 h, změní se konstanta (stejná delta, jiná hodnota). Při požadavku na laditelnou lhůtu se vrátit k variantě B.
+
+---
+
+## C08 / DEF-C08-01 — Pozdní schválení: přechod do `EXPIRED` se rollbackuje (defekt nalezený v kroku 2)
+
+- **Porušené tvrzení:** OP-05 *Window Expired*: „odmítnuto `APPROVAL_WINDOW_EXPIRED` (spouští přechod do `EXPIRED`)" a BR-06.
+- **Pozorováno (TC-C08-04, H2 i PostgreSQL 16.15, `c8db481`):** výjimka se vyhodí podle specifikace, ale **commitnutý** stav zůstává `PENDING_APPROVAL`. Notifikace „expired" přesto **odešla**.
+- **Příčina:** `approveReservation` je `@Transactional`. Zavolá `expire()`, `save()` a `flush()` a pak vyhodí `ApprovalWindowExpiredException` (`RuntimeException`), takže Spring provede rollback. Unit test s mocky (`approvalExpiresAtStartTime`) kontroluje jen objekt v paměti.
+- **Dopad:** soft-lock drží až do dalšího běhu scheduleru (≤ 60 s). Uživatel dostane rozpornou notifikaci. BR-02 porušeno **není**.
+- **Rozhodnutí:** **ACCEPT jako oprava defektu v C09**, odděleně od CR-08. **Vlastník:** Radim Pukalík. **Recenzent:** Adam Murcko (review čeká). **Datum:** 2026-11-15.
+- **Možnosti opravy:** `noRollbackFor = ApprovalWindowExpiredException.class`, *nebo* zápis expirace v `REQUIRES_NEW`, *nebo* vracet výsledek místo výjimky. Notifikaci vždy posílat až po commitu.
+- **Orákl (očekávaný výsledek):** odstranit `@Disabled` z `tcC0804_lateApprovalPersistsExpired`; test musí projít na PostgreSQL.
+
+## C08 — Známá omezení before baseline (CR-08 je nemění)
+
+- **Chybí model rolí / autorizace:** OP-05/06 vyžadují roli Approver a uložení `approver_id`, ale `User` nemá `role`, nic nekontroluje aktéra a `approver` se nikdy nenastaví. Kroky s podmínkou role jsou na tomto baseline **BLOCKED**.
+- **Drift hodin (R-05):** služba používá UTC `Clock`, ale `DataInitializer`, `ReservationLifecycleIntegrationTest` a `list.html` (`#temporals.createNow()`) lokální čas JVM.
+- **Text BR-03 vs. kód:** BR-03 bod 4 uvádí `INVALID_STATE_TRANSITION`, kód vrací `ALREADY_CANCELLED`.
+- **Souběh (R-01):** test souběžného potvrzení zatím nebyl spuštěn.

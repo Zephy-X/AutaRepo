@@ -1,0 +1,27 @@
+[INFO] Running cz.vsb.autarepo.autorepo.common.domain.ReservationRulesTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.089 s -- in cz.vsb.autarepo.autorepo.common.domain.ReservationRulesTest
+[INFO] Running cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+2026-11-15T10:57:29.405+01:00  INFO 20432 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:c08baseline user=SA
+	Database JDBC URL [jdbc:h2:mem:c08baseline]
+	Database version: 2.4.240
+2026-11-15T10:57:32.434+01:00  INFO 20432 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 2 confirmed for user C08 Tester on vehicle VIN-C08-R1
+2026-11-15T10:57:32.458+01:00  INFO 20432 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 3 cancelled for user C08 Tester on vehicle VIN-C08-R1
+[WARNING] Tests run: 4, Failures: 0, Errors: 0, Skipped: 1, Time elapsed: 5.192 s -- in cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+[INFO] Running cz.vsb.autarepo.autorepo.feature.reservation.ReservationLifecycleIntegrationTest
+2026-11-15T10:57:32.780+01:00  INFO 20432 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:autorepo user=SA
+	Database JDBC URL [jdbc:h2:mem:autorepo]
+	Database version: 2.4.240
+2026-11-15T10:57:32.994+01:00  INFO 20432 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 1 pending approval for user Luxury User on vehicle VIN-LUX-001
+2026-11-15T10:57:33.010+01:00  INFO 20432 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 3 pending approval for user Approver User on vehicle VIN-APP-001
+2026-11-15T10:57:33.012+01:00  INFO 20432 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 3 confirmed for user Approver User on vehicle VIN-APP-001
+2026-11-15T10:57:33.020+01:00  INFO 20432 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 4 expired for user Expiring User on vehicle VIN-EXP-002
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.528 s -- in cz.vsb.autarepo.autorepo.feature.reservation.ReservationLifecycleIntegrationTest
+[INFO] Running cz.vsb.autarepo.autorepo.feature.reservation.ReservationPersistenceSpikeTest
+2026-11-15T10:57:33.369+01:00  INFO 20432 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection org.postgresql.jdbc.PgConnection@56ed0511
+	Database JDBC URL [jdbc:postgresql://localhost:5432/autorepodb]
+	Database version: 16.15
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.654 s -- in cz.vsb.autarepo.autorepo.feature.reservation.ReservationPersistenceSpikeTest
+[INFO] Running cz.vsb.autarepo.autorepo.feature.reservation.ReservationServiceTest
+[INFO] Tests run: 12, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.373 s -- in cz.vsb.autarepo.autorepo.feature.reservation.ReservationServiceTest
+[INFO] Tests run: 25, Failures: 0, Errors: 0, Skipped: 1
+[INFO] BUILD SUCCESS

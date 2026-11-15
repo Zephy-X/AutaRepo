@@ -1,0 +1,15 @@
+[INFO] Running cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+2026-11-15T10:52:00.984+01:00  INFO 18576 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@1b732dd
+	Database JDBC URL [jdbc:postgresql://localhost:5432/autorepo_c08]
+	Database version: 16.15
+2026-11-15T10:52:03.355+01:00  INFO 18576 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 1 expired for user C08 Tester on vehicle VIN-C08-LUX
+2026-11-15T10:52:03.474+01:00  INFO 18576 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 3 confirmed for user C08 Tester on vehicle VIN-C08-R1
+2026-11-15T10:52:03.512+01:00  INFO 18576 --- [           main] c.v.a.a.f.r.NotificationServiceStub      : NOTIFICATION [STUB]: Reservation 4 cancelled for user C08 Tester on vehicle VIN-C08-R1
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 4.622 s <<< FAILURE! -- in cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest
+[ERROR] cz.vsb.autarepo.autorepo.feature.reservation.ReservationC08BaselineIntegrationTest.tcC0804_lateApprovalPersistsExpired -- Time elapsed: 0.376 s <<< FAILURE!
+expected: EXPIRED
+ but was: PENDING_APPROVAL
+expected: EXPIRED
+ but was: PENDING_APPROVAL
+[ERROR] Tests run: 4, Failures: 1, Errors: 0, Skipped: 0
+[INFO] BUILD FAILURE

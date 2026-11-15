@@ -4,6 +4,7 @@
 
 - `C06_BASELINE_COMMIT`: `cd1f93c341afadab1c5176b5303bf100fb8eea7b`
 - `CURRENT_REPORTING_COMMIT`: `cd1f93c341afadab1c5176b5303bf100fb8eea7b`
+- `C08_BASELINE_COMMIT`: `c8db481f5913753e2e86abb5791ebbb875e78963` (viz [sekce C08](#c08--before-baseline-a-testovací-evidence))
 
 Tento snapshot repozitáře je stejný commit, který byl vyhodnocen během externího auditu C06; reporting stav níže je proto sladěn se stejným baseline a současným working tree pro korekční změny.
 
@@ -141,3 +142,131 @@ Používat konzistentní ID napříč projektovými dokumenty: `R-01`..`R-05`.
 - Přijaté a opravené F2: `ReservationService` nyní deleguje vyhodnocování pravidel do `ReservationRules` a při překryvu hází `ConflictOverlapException`, což odpovídá designu H2/H1.
 - Dokumentační mezera F3: claim byl zpřesněn, nikoli zamítnut; GitHub tracking je odděleně přiznán od repository evidence a zbývající mezery C03 Part B/C05 jsou explicitně zaznamenány.
 - Automatická verifikace: `./mvnw.cmd test` skončila úspěšně s kódem `0`.
+
+---
+
+## C08 — Before baseline a testovací evidence
+
+Karta změny, dopady a varianty: [`intent-and-change-cz.md#c08--řízená-změna`](intent-and-change-cz.md#c08--řízená-změna). Anglická verze (autoritativní): [`evidence-and-evolution.md#c08--before-baseline-and-test-evidence`](evidence-and-evolution.md#c08--before-baseline-and-test-evidence).
+
+### Krok 0 — Zmrazený before baseline
+
+| Položka | Hodnota |
+|---|---|
+| Commit | `c8db481f5913753e2e86abb5791ebbb875e78963` (`main`). Produkční kód v `src/main` je **beze změny** |
+| Přidáno pro C08 (jen test) | `ReservationC08BaselineIntegrationTest.java` (commitnout spolu s dokumenty) |
+| Přijatá specifikace | Baseline v0.3: BR-01, BR-02, BR-03, BR-06; OP-03, OP-04, OP-05; `state-diagram.mmd`; ADR-01 + C05 |
+| Runtime při běhu | OpenJDK **26.0.2.1** (pom cílí na **21**; pro přesnou reprodukci použijte JDK 21), Maven 3.9.16 (`./mvnw`), Spring Boot **4.1.1**, Windows 11 |
+| Testovací DB | (a) H2 2.4.240 in-memory `c08baseline`, PostgreSQL mode, `create-drop`; (b) PostgreSQL **16.15** (`postgres:16` z `docker-compose.yml`), samostatná jednorázová DB `autorepo_c08`. Vývojová `autorepodb` **nebyla** dotčena |
+| Verze schématu | Bez migrací; schéma generuje Hibernate z entit na `c8db481`. Časy `timestamp(6) without time zone`, `state` s CHECK na 6 hodnot, indexy `idx_reservation_range`, `idx_reservation_vehicle_state` |
+| Hodiny | `Clock.fixed(2026-12-01T06:00:00Z, UTC)` jako `@Primary` bean; interval scheduleru 1 h |
+| Izolace / data | Bez `@Transactional` na třídě; každé volání služby commituje vlastní transakci. `@BeforeEach` smaže vše a vloží uživatele a standardní vozidlo **R1**. Orákly (očekávané výsledky) čtou commitnuté řádky v nových transakcích |
+| Příkazy | [C08 — Reprodukovatelné testovací příkazy](#c08--reprodukovatelné-testovací-příkazy) níže |
+
+### Stávající sada na baseline (spuštěno 2026-11-15)
+
+- Bez Dockeru: `Tests run: 21, Failures: 0, Errors: 1`. Chyba je `ReservationPersistenceSpikeTest`, který potřebuje PostgreSQL. Jde o podmínku prostředí, ne o defekt.
+- S běžícím `postgres` a novou C08 třídou: `Tests run: 25, Failures: 0, Errors: 0, Skipped: 1`, **BUILD SUCCESS**. Log: [`evidence/c08/run4-full-suite-c8db481.txt`](evidence/c08/run4-full-suite-c8db481.txt)
+
+### C08 / TC-C08-01 — pozitivní: sousední potvrzení zachová BR-02
+
+- **Testovací báze:** BR-01, BR-02, OP-03 REQ-03 @ v0.3; riziko R-01 (jen sekvenční část).
+- **Předpoklady:** B1 `CONFIRMED` R1 `[2026-12-01T10:00, 11:00)`, B2 `DRAFT` R1 `[11:00, 12:00)`, čas `06:00 UTC`. Podmínka role: **N/A (BLOCKED)**, model rolí neexistuje.
+
+| # | Akce | Očekáváno PŘED během | Skutečnost PO běhu | Evidence |
+|---|---|---|---|---|
+| 1 | Reset, vložení R1, B1, B2 | 1× `CONFIRMED`, 1× `DRAFT` | Dle očekávání | `@BeforeEach` |
+| 2 | Nezávislé čtení stavu | B1 `CONFIRMED`, B2 `DRAFT`, 1 potvrzená | Dle očekávání | aserce |
+| 3 | `confirmReservation(B2)` | Uspěje, `CONFIRMED` | `CONFIRMED`, notifikace „confirmed" v logu | logy |
+| 4 | Čtení commitnutých `CONFIRMED`, kontrola překryvu | {B1, B2}, bez překryvu | Dle očekávání | `assertNoOverlappingConfirmed` |
+| 5 | Opakování po resetu | Stejně | Stejně (H2 i PostgreSQL) | run1, run2 |
+
+- **Verdikt:** **PASS**.
+
+### C08 / TC-C08-02 — negativní: překrývající potvrzení je odmítnuto
+
+- **Předpoklady:** B1 `CONFIRMED` `[10:00, 11:00)`, B2 `DRAFT` `[10:30, 11:30)`, čas `06:00 UTC`. Kontrakt: `ConflictOverlapException("CONFLICT_OVERLAP")` → flash zpráva (SSR, žádné HTTP 409).
+
+| # | Akce | Očekáváno PŘED během | Skutečnost PO běhu | Evidence |
+|---|---|---|---|---|
+| 1 | Reset, vložení | Jen B1 `CONFIRMED` | Dle očekávání | `@BeforeEach` |
+| 2 | Čtení výchozího stavu | Překryv časů, 1 potvrzená | Dle očekávání | aserce |
+| 3 | `confirmReservation(B2)` | `CONFLICT_OVERLAP` | Vyhozeno dle očekávání | `assertThatThrownBy` |
+| 4 | Čtení po transakci | B1 `CONFIRMED`, B2 `DRAFT` | Dle očekávání | aserce |
+| 5 | Opakování | Stejně | Stejně (H2 i PostgreSQL) | run1, run2 |
+
+- **Verdikt:** **PASS**.
+
+### C08 / TC-C08-03 — současné chování storna („before" pro CR-08)
+
+| # | Akce | Očekáváno PŘED během | Skutečnost PO běhu |
+|---|---|---|---|
+| 1 | Storno `CONFIRMED` `[07:00, 09:00)` v `start − 1h` | Povoleno (v0.3) → `CANCELLED` | `CANCELLED` |
+| 2 | Storno `CONFIRMED` `[06:00, 08:00)` v `now == start` | `CANCELLATION_WINDOW_CLOSED`, stav `CONFIRMED` | Dle očekávání |
+
+- **Verdikt:** **PASS**. Po CR-08 se krok 1 **musí překlopit** na `CANCELLATION_CUTOFF_REACHED`.
+
+### C08 / TC-C08-04 — sonda: pozdní schválení uloží `EXPIRED`
+
+- **Předpoklady:** luxusní vozidlo, P `PENDING_APPROVAL` `[10:00, 12:00)`, `reviewDeadline = 05:00`, čas `06:00 UTC`.
+
+| # | Akce | Očekáváno PŘED během | Skutečnost PO běhu | Evidence |
+|---|---|---|---|---|
+| 1 | `approveReservation(P)` | `APPROVAL_WINDOW_EXPIRED` | Vyhozeno; notifikace „expired" odeslána | run1, run3 |
+| 2 | Čtení commitnutého stavu | `EXPIRED` | **`PENDING_APPROVAL`** | run1 (H2), run3 (PostgreSQL) |
+
+- **Verdikt:** **FAIL** → **DEF-C08-01** (rollback `@Transactional` metody). Test je teď `@Disabled` s popisem pozorování a lze ho spustit přes `-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition`. C09 `@Disabled` odstraní.
+
+### C08 — Reprodukovatelné testovací příkazy
+
+**1. C08 testy na izolované in-memory H2 (bez Dockeru):**
+
+```bash
+./mvnw -B test -Dtest=ReservationC08BaselineIntegrationTest
+```
+
+**2. Stejné testy na skutečném PostgreSQL 16, v samostatné jednorázové databázi** (test maže všechny řádky, nikdy ho nesměrujte na `autorepodb`):
+
+```bash
+docker compose up -d postgres
+docker exec local_postgres psql -U postgres -c "CREATE DATABASE autorepo_c08;"
+# přihlašovací údaje = výchozí z docker-compose (viz README); C08_DB_PASSWORD nastavte sami
+export C08_DB_URL=jdbc:postgresql://localhost:5432/autorepo_c08
+export C08_DB_DRIVER=org.postgresql.Driver
+export C08_DB_USER=postgres
+export C08_DB_PASSWORD=<heslo z compose>
+export C08_DB_DIALECT=org.hibernate.dialect.PostgreSQLDialect
+./mvnw -B test -Dtest=ReservationC08BaselineIntegrationTest
+```
+
+**3. Spuštění vypnuté sondy TC-C08-04 (DEF-C08-01, do C09 má selhat):**
+
+```bash
+./mvnw -B test -Dtest=ReservationC08BaselineIntegrationTest "-Djunit.jupiter.conditions.deactivate=org.junit.*DisabledCondition"
+```
+
+**4. Celá sada** (`ReservationPersistenceSpikeTest` potřebuje běžící `postgres` z compose, jinak skončí *Failed to load ApplicationContext*):
+
+```bash
+./mvnw -B test
+```
+
+V PowerShellu použijte `./mvnw.cmd` a `$env:C08_DB_URL="..."` místo `export`.
+
+### C08 — Definition of Done
+
+- [x] Přesný before baseline a jeho přijaté chování (`c8db481`, Baseline v0.3)
+- [x] Dva krokové testovací případy s daty a očekáváním zapsanými před během (TC-C08-01/02, navíc TC-C08-03/04)
+- [x] Alespoň jeden skutečně spuštěný přes reálnou persistenci: všechny čtyři na H2 **i** PostgreSQL 16.15 (TC-04 FAIL → DEF-C08-01)
+- [x] Jedno věrohodné CR (CR-08) s úplnou maticí dopadů a maticí variant
+- [x] Rozhodnutí zapsáno: ACCEPT varianta A, vlastník Radim Pukalík, 2026-11-15
+- [ ] **Peer review:** Adam Murcko napíše review do karty změny (`intent-and-change-cz.md` → Peer review → `TODO`)
+- [x] Konkrétní předání do C09 (delta, orákly (očekávané výsledky), regrese)
+- [x] Odkazy žijí ve stávajícím repozitáři; známá omezení zapsána
+
+### Shrnutí stavu C08
+
+- TC-C08-01/02/03 **PASS**, TC-C08-04 **FAIL → DEF-C08-01**.
+- CR-08: **ACCEPTED, varianta A** (vlastník Radim Pukalík, 2026-11-15; recenzent Adam Murcko, review čeká). PLANNED pro C09: neimplementováno, neověřeno.
+- DEF-C08-01: **ACCEPTED** jako oprava defektu v C09 (vlastník Radim Pukalík).
+- Nespuštěno: test souběhu (R-01), HTTP/UI toky, kroky s rolí (BLOCKED).
