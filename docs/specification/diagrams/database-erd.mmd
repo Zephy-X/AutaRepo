@@ -1,21 +1,22 @@
-%%{init: {"theme": "base", "er": {"layoutDirection": "LR"}}}%%
 erDiagram
     USERS ||--o{ RESERVATIONS : places
+    USERS |o--o{ RESERVATIONS : approves
     VEHICLES ||--o{ RESERVATIONS : assigned_to
 
     USERS {
         bigint id PK
         varchar full_name
         varchar email
-        varchar role
+        varchar driver_license_number
     }
 
     VEHICLES {
         bigint id PK
         varchar brand
         varchar model
+        int model_year
         varchar vin
-        varchar license_plate UK
+        varchar license_plate
         boolean is_active
         boolean requires_approval
     }
@@ -24,8 +25,12 @@ erDiagram
         bigint id PK
         bigint vehicle_id FK
         bigint user_id FK
+        bigint approver_id FK "nullable"
         timestamp start_time
         timestamp end_time
         varchar state "DRAFT | PENDING_APPROVAL | CONFIRMED | REJECTED | CANCELLED | EXPIRED"
         timestamp created_at
+        timestamp submitted_at "nullable"
+        timestamp review_deadline "nullable"
+        timestamp approved_at "nullable"
     }

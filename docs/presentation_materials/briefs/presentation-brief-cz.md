@@ -159,8 +159,8 @@ definitivní důkaz vyžaduje paralelní PostgreSQL test s pozorovaným výsledk
 
 ## Co mít otevřené před prezentací
 
-- `docs/SWI_C08_Project_Status_FILLED2.pptx`
-- `docs/technical-defense-brief-cz.md`
+- `docs/presentation_materials/C08/SWI_C08_Project_Status_FILLED2.pptx`
+- `docs/presentation_materials/briefs/technical-defense-brief-cz.md`
 - `src/main/java/.../ReservationService.java`
 - `src/main/java/.../Reservation.java`
 - `src/main/java/.../common/domain/ReservationRules.java`
